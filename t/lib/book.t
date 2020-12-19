@@ -26,5 +26,6 @@ my $chapter_2 = 'Al';
 $book->add_chapter( $chapter_1 );
 $book->add_chapter( $chapter_2 );
 ok( @{$book->chapters} == 2, 'Returns chapter count' );
+
 done_testing();
 
