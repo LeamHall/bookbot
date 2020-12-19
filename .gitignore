@@ -1,0 +1,5 @@
+# Active vi sessions.
+*.swp
+*.swo
+
+/tmp/
