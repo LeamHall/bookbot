@@ -1,0 +1,75 @@
+How to use build_book
+=====================
+
+Command options
+---------------
+
+  # TODO: Add options and configurations
+  bin/build_book -h
+
+Process
+-------
+
+  With thanks to mikekaganski of Freenode#libreoffice
+
+  Run build_book
+
+  Open LibreOffice Writer (or similar)
+
+  1.     To convert the string '__chapter_break__' to an actual page break:
+    1.1. The __chapter_break__ string should already start a new paragraph.
+    1.2. Edit -> Find and Replace 
+          Find:       __chapter_break__
+          Find All
+          Click "Replace" entry to move focus.
+    1.3. Upper menu: Format -> Paragraph -> Text Flow
+          "Breaks"    -> Insert
+          "Type"      -> Page
+          "Position"  -> Before
+          "Ok"
+    1.4.  Edit -> Find and Replace
+          Find:       __chapter_break__
+          Replace:    <leave empty>
+          Replace All
+          Close
+
+  2.      To select a font not on the list
+    2.1.  Use either Garamond or Palantino. Go with Palantino.
+    2.2.  Ctrl-a to select all.
+    2.3.  Type in the font name in the font entry.
+    2.4.  Select 10 for size.
+
+  3.      To make the Chapter headers bold.
+    3.1.  Edit -> Find and Replace
+    3.2.  Find:     Chapter [:digit:]{3}
+    3.3.  Replace:  &
+      3.3.1.  Ensure the selection focus is here before proceeding.
+    3.4.  Format -> Font -> Style -> Bold
+            OK
+    3.5.  Ensure "Regular Expressions" box is checked.
+    3.6.  Replace All
+    3.7.  Repeat for "Glossary", "Prologue", "Epilogue", "Afterward", 
+          and "Insider Information".
+    3.8.  Close
+    3.9.  Manually Bold and alter size on the Title and Dedication pages.
+
+  4.      To make the Time_Location headers bold.
+    4.1.  Edit -> Find and Replace
+    4.2.  Find:     \[.*
+    4.3.  Find All
+    4.4.  Format -> Font -> Style -> Bold
+    4.5.  Replace:  &
+    4.6.  Ensure "Regular Expressions" box is checked.
+    4.7.  Replace All
+    4.8.  Close
+
+  5.      To add page numbers
+    5.1.  Format -> Page Style -> Footer
+    5.2.  Select "Footer on".
+            OK
+    5.3.  Click the footer area of the first page.
+    5.4.  Insert -> Page Number 
+    5.5.  Select the number "1", and then click the "Align Center" formater.
+    5.6.  For font, select Palantino, and "10".
+
+
