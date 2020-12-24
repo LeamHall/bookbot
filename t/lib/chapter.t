@@ -24,8 +24,8 @@ isa_ok( $chapter, 'Chapter');
 my $raw_data = "[1429.123.0456] Nowhere
   Al looked around. It was interesting.";
 
-$chapter->write_header();
-$chapter->write_headless_data();
+#$chapter->write_header();
+#$chapter->write_headless_data();
 
 ok( $chapter->raw_data()      eq $raw_data, 'Returns data');
 ok( $chapter->header()        eq '[1429.123.0456] Nowhere', 'Returns header' );

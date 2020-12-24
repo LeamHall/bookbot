@@ -1,19 +1,30 @@
 # name:     Chapter.pm
-# version:  0.0.1
-# date:     20201219
+# version:  0.0.2
+# date:     20201224
 # author:   Leam Hall
 # desc:     Chapter object
 
+## CHANGELOG
+# 0.0.2   Revert to older OO style. Thank you Damian Conway!
+
 package Chapter;
-use Moo;
 
-has title         => ( is => 'ro' );
-has number        => ( is => 'ro' );
-has raw_data      => ( is => 'ro' );
-has header        => ( is => 'rw' );
-has headless_data => ( is => 'rw' );
+sub new {
+  my ($class, %data) = @_;
+  bless {
+    _title          => $data{title},
+    _raw_data       => $data{raw_data},
+    _number         => $data{number},
+    _header         => "",
+    _headless_data  => "",
+  }, $class;
+}
 
-sub write_header {
+sub raw_data  { $_[0]->{_raw_data}  };
+sub title     { $_[0]->{_title}     };
+sub number    { $_[0]->{_number}    };
+
+sub header    {
   my ($self)  = @_;
   my ($line) = split(/\n/, $self->raw_data() );
   chomp($line);
@@ -21,7 +32,7 @@ sub write_header {
   $self->{header}  = $line;
 }
 
-sub write_headless_data {
+sub headless_data {
   my ($self)  = @_;
   my $data;
   ($data = $self->raw_data) =~ s/^.*\n//;
