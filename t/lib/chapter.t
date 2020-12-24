@@ -1,8 +1,11 @@
 # name:     Chapter.t
-# version:  0.0.1
-# date:     20201219
+# version:  0.0.2
+# date:     20201224
 # author:   Leam Hall
 # desc:     Tests for the Chapter object.
+
+## CHANGELOG
+# 0.0.2   Moved data parsing into the object.
 
 use strict;
 use warnings;
@@ -23,9 +26,6 @@ isa_ok( $chapter, 'Chapter');
 
 my $raw_data = "[1429.123.0456] Nowhere
   Al looked around. It was interesting.";
-
-#$chapter->write_header();
-#$chapter->write_headless_data();
 
 ok( $chapter->raw_data()      eq $raw_data, 'Returns data');
 ok( $chapter->header()        eq '[1429.123.0456] Nowhere', 'Returns header' );
