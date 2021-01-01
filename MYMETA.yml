@@ -13,6 +13,15 @@ meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
   version: '1.4'
 name: bookbot
+provides:
+  Book:
+    file: lib/Book.pm
+  Section:
+    file: lib/Section.pm
+    version: '0.03'
+  bookbot:
+    file: lib/bookbot.pm
+    version: '0.01'
 resources:
   license: http://www.perlfoundation.org/artistic_license_2_0
 version: '0.01'

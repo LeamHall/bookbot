@@ -21,11 +21,11 @@ isa_ok( $book, 'Book');
 ok( $book->author eq 'Leam Hall',       'Returns author' );
 ok( $book->title  eq 'Al rides again',  'Returns book title' );
 
-my $chapter_1 = 'Wilbur';
-my $chapter_2 = 'Al';
-$book->add_chapter( $chapter_1 );
-$book->add_chapter( $chapter_2 );
-ok( @{$book->chapters} == 2, 'Returns chapter count' );
+my $section_1 = 'Wilbur';
+my $section_2 = 'Al';
+$book->add_section( $section_1 );
+$book->add_section( $section_2 );
+ok( @{$book->sections} == 2, 'Returns section count' );
 
 done_testing();
 

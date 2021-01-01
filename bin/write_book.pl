@@ -1,19 +1,22 @@
 #!/usr/bin/env perl
 
 # name:     write_book.pl
-# version:  0.0.1
-# date:     20201219
+# version:  0.0.2
+# date:     20210101
 # author:   Leam Hall
-# desc:     Write book from book and chapter objects.
+# desc:     Write book from book and section objects.
+
+## CHANGELOG
+# 20210101  Work changes from Section.pm.
 
 use strict;
 use warnings;
 
 use lib "lib";
 use Book;
-use Chapter;
+use Section;
 
-my $book_dir      = "/home/leam/lang/git/LeamHall/firster_academy_1429_1";
+my $book_dir      = "/home/leam/lang/git/LeamHall/write_book_test";
 my $output_dir    = "$book_dir/book";
 my $sections_dir  = "$book_dir/sections";
 my $book_file     = "$output_dir/NavakSen_new.txt";
@@ -28,8 +31,8 @@ opendir( my $dir, $sections_dir) or die "Can't open $sections_dir: $!";
 
 select $file;
 
-my $chapter_number = 1;
-my $chapter_break   = "\n__chapter_break__\n";
+my $section_number = 1;
+my $section_break   = "\n__section_break__\n";
 
 my @files = sort( readdir( $dir ));
 foreach my $file (@files) {
@@ -42,18 +45,17 @@ foreach my $file (@files) {
       $raw_data = <$fh>;
       close($fh);
     }
-    my $chapter = Chapter->new(
-      number => $chapter_number,
-      raw_data  => $raw_data,
+    my $section = Section->new(
+      number      => $section_number,
+      raw_data    => $raw_data,
+      has_header  => 1,
     );
-    $chapter->write_header;
-    $chapter->write_headless_data;
-    $chapter_number++;    
-    print $chapter_break;
-    printf "Chapter %03d", $chapter->{number};
+    $section_number++;    
+    print $section_break;
+    printf "Chapter %03d", $section->number();
     print "\n\n";
-    print "$chapter->{header}\n\n";
-    print "$chapter->{headless_data}\n\n";
+    print $section->header(), "\n\n";
+    print $section->headless_data(), "\n\n";
   }
 } 
 
