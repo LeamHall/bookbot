@@ -41,9 +41,12 @@ Initializes with a data hash consisiting of title and author.
 sub new {
   my ( $class, %data ) = @_;
   bless {
-    _title    => $data{title},
-    _author   => $data{author},
-    _sections => [],  
+    _author     => $data{author},
+    _book_dir   => $data{book_dir},
+    _file_name  => $data{file_name},
+    _output_dir => $data{output_dir},
+    _sections   => [],  
+    _title      => $data{title},
   }, $class;
 }
 
@@ -67,14 +70,30 @@ Returns the author.
 
 sub author    { $_[0]->{_author}    };
 
-=head2 title
+=head2 book_dir
 
-Returns the title.
+Returns the directory for the book project.
 
 =cut
 
-sub title     { $_[0]->{_title}     };
+sub book_dir { $_[0]->{_book_dir} };
 
+
+=head2 file_name
+
+Returns the file portion of the file_name.
+
+=cut
+
+sub file_name { $_[0]->{_file_name} };
+
+=head2 output_dir
+
+Returns the directory where the files are written.
+
+=cut
+
+sub output_dir { $_[0]->{_output_dir} };
 
 =head2 sections
 
@@ -83,6 +102,15 @@ Returns the array of section objects.
 =cut
 
 sub sections  { $_[0]->{_sections}  };
+
+=head2 title
+
+Returns the title.
+
+=cut
+
+sub title     { $_[0]->{_title}     };
+
 
 
 =head1 AUTHOR

@@ -12,14 +12,20 @@ use Test::More;
 
 use_ok( 'Book' ) or die $!;
 
-my $book    = Book->new(
-  title     => 'Al rides again',
-  author    => 'Leam Hall',
+my $book      = Book->new(
+  author      => 'Leam Hall',
+  book_dir    => '/home/leam/mybook',
+  file_name   => 'al_rides_again',
+  output_dir  => 'book',
+  title       => 'Al rides again',
 );
 isa_ok( $book, 'Book');
 
-ok( $book->author eq 'Leam Hall',       'Returns author' );
-ok( $book->title  eq 'Al rides again',  'Returns book title' );
+ok( $book->author     eq 'Leam Hall',         'Returns author' );
+ok( $book->book_dir   eq '/home/leam/mybook', 'Returns output_dir' );
+ok( $book->file_name  eq 'al_rides_again',    'Returns book file_name' );
+ok( $book->output_dir eq 'book',              'Returns output_dir' );
+ok( $book->title      eq 'Al rides again',    'Returns book title' );
 
 my $section_1 = 'Wilbur';
 my $section_2 = 'Al';

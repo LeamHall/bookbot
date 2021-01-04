@@ -1,14 +1,15 @@
 #!/usr/bin/env perl
 
 # name:     write_book.pl
-# version:  0.0.4
-# date:     20210102
+# version:  0.0.5
+# date:     20210104
 # author:   Leam Hall
 # desc:     Write book from section objects.
 
 ## CHANGELOG
 # 20210101  Work changes from Section.pm.
 # 20210102  Add default config, CLI options, and config file.
+# 20210104  Use Book object.
 
 use strict;
 use warnings;
@@ -88,12 +89,12 @@ if ( ! -d $book_dir ) {
 $file_name          = lc($file_name);
 $file_name          =~ s/\s*$//;
 $file_name          =~ s/\s+/_/g;
-$file_name          = $file_name . '.txt';
+$file_name          = $file_name;
 
 # Set the main variables.
-my $output_dir      = "$book_dir/$configs{output_dir}";
+#my $output_dir      = "$book_dir/$configs{output_dir}";
 my $sections_dir    = "$book_dir/$configs{section_dir}";
-my $book_file       = "$output_dir/$file_name";
+#my $book_file       = "$output_dir/$file_name";
 
 
 ## TODO: Is the book object needed?
@@ -101,14 +102,46 @@ my $book_file       = "$output_dir/$file_name";
 #   And to write the different types (text, LaTeX, XML, etc).
 
 ## And away we go!
-open( my $file, '>', $book_file) or die "Can't open $book_file: $!";
 opendir( my $dir, $sections_dir) or die "Can't open $sections_dir: $!";
 
-select $file;
+my $book = Book->new( 
+  author      => $configs{author}, 
+  book_dir    => $configs{book_dir},
+  file_name   => $configs{file_name},
+  output_dir  => $configs{output_dir},
+  title       => $configs{title}, 
+);
 
+sub write_text {
+  my ($book)      = @_;
+  my $ref_type = ref($book);
+  print "ref_type is $ref_type.\n";
+  print "title is $book->title().\n";
+  exit;
+=pod
+  #my $text_file   = $book->book_dir . '/' . $book->output_dir . '/' . $book->file_name . '.txt';
+
+  print "The text_file is $text_file.\n";
+  my $section_break   = "\n__section_break__\n";
+  open( my $file, '>', $text_file) or die "Can't open $text_file: $!";
+  #select $file;
+ 
+  foreach my $section ( $book->sections ) { 
+    print "This section's header is $section->header.\n";
+  }
+  #print $section_break;
+  #printf "Chapter %03d", $section->number();
+  #print "\n\n";
+  #print $section->header(), "\n\n";
+  #print $section->headless_data(), "\n\n";
+
+  close($file);
+=cut
+}
+
+
+## Build sections and put them into the Book.
 my $section_number = 1;
-my $section_break   = "\n__section_break__\n";
-
 my @files = sort( readdir( $dir ));
 foreach my $file (@files) {
   if ( -f "$sections_dir/$file" ) {
@@ -125,15 +158,16 @@ foreach my $file (@files) {
       raw_data    => $raw_data,
       has_header  => 1,
     );
+    $book->add_section($section);
     $section_number++;    
-    print $section_break;
-    printf "Chapter %03d", $section->number();
-    print "\n\n";
-    print $section->header(), "\n\n";
-    print $section->headless_data(), "\n\n";
+    #print $section_break;
+    #printf "Chapter %03d", $section->number();
+    #print "\n\n";
+    #print $section->header(), "\n\n";
+    #print $section->headless_data(), "\n\n";
   }
 } 
 
 close($dir);
-close($file);
- 
+
+write_text( \$book ); 
