@@ -59,6 +59,17 @@ sub new {
   #$self->_write_report();
 }
 
+=head2 avg_word_length
+
+Returns the average word length.
+
+=cut
+
+sub avg_word_length {
+  my ( $self ) = @_;
+  return $self->{_report}->avg_word_length;
+}
+
 =head2 header
 
 Returns the section header, if appropriate, or undef.
@@ -98,6 +109,19 @@ sub headless_data {
   return $self->{_headless_data};
 }
 
+=head2 kinkaid
+
+Retuns the Kinkaid score per: https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests
+
+=cut
+
+sub kincaid {
+  my ($self)  = @_;
+  my $k = sprintf("%0.2f", $self->{_report}->kincaid);
+  return $k;
+}
+
+  
 =head2 number
 
 Returns the section number.

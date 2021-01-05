@@ -29,12 +29,13 @@ $section->_write_report;
 my $raw_data = "[1429.123.0456] Nowhere
   Al looked around. It was interesting.";
 
-ok( $section->raw_data()      eq $raw_data, 'Returns data');
-ok( $section->header()        eq '[1429.123.0456] Nowhere', 'Returns header' );
-ok( $section->number()        == 1, 'Returns section number' );
-ok( $section->headless_data() eq 'Al looked around. It was interesting.', 'Returns headless data');
-ok( $section->word_count()    == 6, 'Returns proper word count');
-
+ok( $section->raw_data()        eq $raw_data, 'Returns data');
+ok( $section->header()          eq '[1429.123.0456] Nowhere', 'Returns header' );
+ok( $section->number()          == 1, 'Returns section number' );
+ok( $section->headless_data()   eq 'Al looked around. It was interesting.', 'Returns headless data');
+ok( $section->word_count()      == 6, 'Returns proper word count');
+ok( $section->avg_word_length() == 5, 'Average word length == 5');
+ok( $section->kincaid()         == 5.25, 'Report Kincaid of 5.25');
 
 my $title_section = Section->new(
   raw_data    => "TITLE: An odd event
