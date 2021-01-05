@@ -1,5 +1,5 @@
 {
-   "abstract" : "The great new bookbot!",
+   "abstract" : "Collate text files into a book-ish sort of thing.",
    "author" : [
       "Leam Hall <leamhall@gmail.com>"
    ],
@@ -27,7 +27,8 @@
    },
    "provides" : {
       "Book" : {
-         "file" : "lib/Book.pm"
+         "file" : "lib/Book.pm",
+         "version" : "0.03"
       },
       "Section" : {
          "file" : "lib/Section.pm",

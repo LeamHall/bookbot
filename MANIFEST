@@ -1,8 +1,9 @@
-bin/write_book.pl
+bin/bookbot.pl
 Build.PL
 Changes
 docs/HOWTO
 lib/Book.pm
+lib/bookbot.pm
 lib/Section.pm
 LICENSE
 MANIFEST			This list of files

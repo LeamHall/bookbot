@@ -70,6 +70,7 @@ sub header {
     next if $line =~ m/TITLE:/;
     chomp($line);
     $line =~ s/^\s*//;
+    next unless length($line);  # Skips extra blank lines at start.
     $self->{_header}  = $line;
     last;
   }
@@ -86,6 +87,7 @@ sub headless_data {
   my ($self)  = @_;
   my $data;
   ($data = $self->raw_data) =~ s/^TITLE:.*\n//;
+  # TODO: Not sure this covers multiple empty blank lines.
   $data =~ s/^.*\n// if $self->{_has_header};
   $data =~ s/^\s*//;
   chomp($data);

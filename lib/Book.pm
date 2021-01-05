@@ -111,7 +111,30 @@ Returns the title.
 
 sub title     { $_[0]->{_title}     };
 
+=head2 write_text
 
+Writes the text version of the file.
+
+=cut
+
+sub write_text {
+  my ($self)      = @_; 
+  my $title = $self->title;
+  my $text_file   = $self->book_dir . '/' . $self->output_dir . '/' . $self->file_name . '.txt';
+  my $section_break   = "\n__section_break__\n";
+
+  open( my $file, '>', $text_file) or die "Can't open $text_file: $!";
+  select $file;
+ 
+  foreach my $section ( @{$self->sections} ) { 
+    print $section_break;
+    printf "Chapter %03d", $section->number();
+    print "\n\n";
+    print $section->header(), "\n\n";
+    print $section->headless_data(), "\n\n";
+  }
+  close($file);
+}
 
 =head1 AUTHOR
 

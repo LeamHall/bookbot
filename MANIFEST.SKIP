@@ -89,3 +89,4 @@
 
 # Avoid archives of this distribution
 \bbookbot-[\d\.\_]+
+\bbookbot-.*\*

@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# name:     write_book.pl
+# name:     bookbot.pl
 # version:  0.0.5
 # date:     20210104
 # author:   Leam Hall
@@ -9,7 +9,7 @@
 ## CHANGELOG
 # 20210101  Work changes from Section.pm.
 # 20210102  Add default config, CLI options, and config file.
-# 20210104  Use Book object.
+# 20210104  Use Book object. Change program to bookbot.pl
 
 use strict;
 use warnings;
@@ -20,6 +20,24 @@ use YAML::Tiny;
 use lib "lib";
 use Book;
 use Section;
+
+# subroutines 
+sub file_name_from_title {
+  (my $file_name)     = @_;
+  $file_name          =~ s/[\W]/ /g;
+  $file_name          = lc($file_name);
+  $file_name          =~ s/\s*$//;
+  $file_name          =~ s/\s+/_/g;
+  return $file_name;
+}
+
+sub show_help {
+  print "Usage: $0 \n";
+  print "\t --book_dir <dir>       \n";
+  print "\t --config_file <file>   \n";
+  print "\t --help               This menu \n";
+  exit;
+}
 
 ### Config precedence:
 ##  1. Command Line Options
@@ -36,9 +54,6 @@ my %configs  = (
   title       => "",
 );
 
-## Get options from config file
-my %file_configs;
-
 ## Set up for GetOptions
 my $book_dir;
 my $config_file = 'book_config.yml';
@@ -50,17 +65,10 @@ GetOptions(
   "help"          => \$help,
 );
 
-sub show_help {
-  print "Usage: $0 \n";
-  print "\t --book_dir <dir>       \n";
-  print "\t --config_file <file>   \n";
-  print "\t --help               This menu \n";
-  exit;
-}
-
 show_help() if $help;
 
 # Parse the config file, if there is one.
+my %file_configs;
 if ( -f $config_file ) {
   eval {
     %file_configs = %{YAML::Tiny::LoadFile($config_file)};
@@ -84,22 +92,11 @@ if ( ! -d $book_dir ) {
   exit;
 }
 
-## Munge title into a reasonable file name.
-( my $file_name     = $configs{title} ) =~ s/[\W]/ /g;
-$file_name          = lc($file_name);
-$file_name          =~ s/\s*$//;
-$file_name          =~ s/\s+/_/g;
-$file_name          = $file_name;
-
 # Set the main variables.
-#my $output_dir      = "$book_dir/$configs{output_dir}";
 my $sections_dir    = "$book_dir/$configs{section_dir}";
-#my $book_file       = "$output_dir/$file_name";
 
-
-## TODO: Is the book object needed?
-#   Maybe to list pre and post sections, to keep things in order.
-#   And to write the different types (text, LaTeX, XML, etc).
+# Munge title into a reasonable filename.
+$configs{file_name} = file_name_from_title( $configs{title} );
 
 ## And away we go!
 opendir( my $dir, $sections_dir) or die "Can't open $sections_dir: $!";
@@ -112,35 +109,8 @@ my $book = Book->new(
   title       => $configs{title}, 
 );
 
-sub write_text {
-  my ($book)      = @_;
-  my $ref_type = ref($book);
-  print "ref_type is $ref_type.\n";
-  print "title is $book->title().\n";
-  exit;
-=pod
-  #my $text_file   = $book->book_dir . '/' . $book->output_dir . '/' . $book->file_name . '.txt';
-
-  print "The text_file is $text_file.\n";
-  my $section_break   = "\n__section_break__\n";
-  open( my $file, '>', $text_file) or die "Can't open $text_file: $!";
-  #select $file;
- 
-  foreach my $section ( $book->sections ) { 
-    print "This section's header is $section->header.\n";
-  }
-  #print $section_break;
-  #printf "Chapter %03d", $section->number();
-  #print "\n\n";
-  #print $section->header(), "\n\n";
-  #print $section->headless_data(), "\n\n";
-
-  close($file);
-=cut
-}
-
-
 ## Build sections and put them into the Book.
+# This would be cool for a builder object.
 my $section_number = 1;
 my @files = sort( readdir( $dir ));
 foreach my $file (@files) {
@@ -160,14 +130,9 @@ foreach my $file (@files) {
     );
     $book->add_section($section);
     $section_number++;    
-    #print $section_break;
-    #printf "Chapter %03d", $section->number();
-    #print "\n\n";
-    #print $section->header(), "\n\n";
-    #print $section->headless_data(), "\n\n";
   }
 } 
 
 close($dir);
 
-write_text( \$book ); 
+$book->write_text; 
