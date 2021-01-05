@@ -135,6 +135,17 @@ sub title {
   return $self->{_title};
 }
 
+=head2 word_count
+
+Returns the word count of the section, minus title or header.
+
+=cut
+
+sub word_count {
+  my ($self)  = @_;
+  return $self->{_report}->num_words;  
+}
+
 
 =head2 _write_report
 
@@ -149,10 +160,6 @@ sub _write_report {
   $self->{_report} = Text::IQ::EN->new( \$text );
 }
 
-sub word_count {
-  my ($self)  = @_;
-  return $self->{_report}->num_words;  
-}
 
 
 =head1 AUTHOR
