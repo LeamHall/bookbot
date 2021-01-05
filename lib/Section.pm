@@ -46,14 +46,17 @@ The section's title is set by the first data line beginning with "TITLE:".
 
 sub new {
   my ($class, %data) = @_;
-  bless {
-    _title          => undef,
-    _raw_data       => $data{raw_data},
-    _number         => $data{number},
+  my $self = {
     _has_header     => $data{has_header} || 0,
     _header         => undef,
     _headless_data  => undef,
-  }, $class;
+    _number         => $data{number},
+    _raw_data       => $data{raw_data},
+    _report         => undef,
+    _title          => undef,
+  };
+  bless $self, $class;
+  #$self->_write_report();
 }
 
 =head2 header
@@ -95,6 +98,15 @@ sub headless_data {
   return $self->{_headless_data};
 }
 
+=head2 number
+
+Returns the section number.
+
+=cut
+
+sub number    { $_[0]->{_number}    };
+
+
 =head2 raw_data 
 
 Returns the raw_data from the file.
@@ -124,14 +136,23 @@ sub title {
 }
 
 
-=head2 number
+=head2 _write_report
 
-Returns the section number.
+Writes the report data.
 
 =cut
 
-sub number    { $_[0]->{_number}    };
+sub _write_report {
+  my ($self)  = @_;
+  use Text::IQ::EN;
+  my $text = $self->headless_data;
+  $self->{_report} = Text::IQ::EN->new( \$text );
+}
 
+sub word_count {
+  my ($self)  = @_;
+  return $self->{_report}->num_words;  
+}
 
 
 =head1 AUTHOR
