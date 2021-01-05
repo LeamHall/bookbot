@@ -2,8 +2,12 @@
 *.swp
 *.swo
 
-tmp/
 _build/
 blib/
-cover_db/
 bookbot*/
+build/
+BUILD
+cover_db/
+MANIFEST*
+MYMETA*
+tmp/
