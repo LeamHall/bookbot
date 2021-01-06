@@ -10,11 +10,11 @@ Section
 
 =head1 VERSION
 
-Version 0.03
+Version 0.04
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 
 =head1 SYNOPSIS
@@ -56,8 +56,18 @@ sub new {
     _title          => undef,
   };
   bless $self, $class;
-  #$self->_write_report();
+  $self->_write_report();
+  return $self;
 }
+
+## The avg_sentence_length method in Text::IQ::EN does not work.
+# =head2 avg_sentence_length
+#
+# Returns the average sentence length.
+#
+# =cut
+# 
+# sub avg_sentence_length { $_[0]->{_report}->avg_sentence_length };
 
 =head2 avg_word_length
 
@@ -68,6 +78,18 @@ Returns the average word length.
 sub avg_word_length {
   my ( $self ) = @_;
   return $self->{_report}->avg_word_length;
+}
+
+=head2 flesch
+
+Returns the Flesch score per: https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests
+
+=cut
+
+sub flesch {
+  my ($self)  = @_;
+  my $f = sprintf("%0.2f", $self->{_report}->flesch());
+  return $f;
 }
 
 =head2 header
@@ -101,6 +123,7 @@ sub headless_data {
   my ($self)  = @_;
   my $data;
   ($data = $self->raw_data) =~ s/^TITLE:.*\n//;
+  $data =~ s/^\s*//;
   # TODO: Not sure this covers multiple empty blank lines.
   $data =~ s/^.*\n// if $self->{_has_header};
   $data =~ s/^\s*//;
@@ -121,7 +144,7 @@ sub kincaid {
   return $k;
 }
 
-  
+ 
 =head2 number
 
 Returns the section number.
@@ -138,6 +161,15 @@ Returns the raw_data from the file.
 =cut
 
 sub raw_data  { $_[0]->{_raw_data}  };
+
+=head2 sentence_count
+
+Returns the number of sentences.
+
+=cut
+
+sub sentence_count { $_[0]->{_report}->num_sentences };
+
 
 =head2 title
 
