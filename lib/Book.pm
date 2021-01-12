@@ -42,11 +42,14 @@ sub new {
   my ( $class, %data ) = @_;
   bless {
     _author     => $data{author},
+    _blurb_file => $data{blurb_file},
     _book_dir   => $data{book_dir},
     _file_name  => $data{file_name},
+    _image      => $data{image},
     _output_dir => $data{output_dir},
     _sections   => [],  
     _title      => $data{title},
+    _url        => $data{url},
   }, $class;
 }
 
@@ -70,6 +73,24 @@ Returns the author.
 
 sub author    { $_[0]->{_author}    };
 
+=head2 blurb
+
+Returns the blurb.
+
+=cut
+
+sub blurb {
+  my $self = shift;
+  my $file;
+  {
+    local $/;
+    open my $fh, '<', $self->{_blurb_file} or die "Can't open blurb file: $!";
+    $file = <$fh>;
+    chomp($file);
+  }
+  return $file;
+}
+
 =head2 book_dir
 
 Returns the directory for the book project.
@@ -86,6 +107,15 @@ Returns the file portion of the file_name.
 =cut
 
 sub file_name { $_[0]->{_file_name} };
+
+=head2 image
+
+Returns the localized path to the image.
+
+=cut
+
+sub image { $_[0]->{_image} };
+
 
 =head2 output_dir
 
@@ -110,6 +140,15 @@ Returns the title.
 =cut
 
 sub title     { $_[0]->{_title}     };
+
+=head2 url
+
+Return the URL of the book.
+
+=cut
+
+sub url       { $_[0]->{_url}       };
+
 
 =head2 write_text
 
@@ -151,7 +190,7 @@ Please report any bugs or feature requests to L<https://github.com/LeamHall/book
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc Book
+    perldoc lib/Book
 
 
 You can also look for information at:
@@ -161,14 +200,6 @@ You can also look for information at:
 =item * GitHub Project Page
 
 L<https://github.com/LeamHall/bookbot>
-
-=item * CPAN Ratings
-
-L<https://cpanratings.perl.org/d/.>
-
-=item * Search CPAN
-
-L<https://metacpan.org/release/.>
 
 =back
 
