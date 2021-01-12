@@ -6,21 +6,9 @@ Tools to collate files into a book.
  - [TODO] Uses LaTeX for formatting.
  - [TODO] Produces word frequency counts.
 
-INSTALLATION
+You can find documentation for this module with perldoc.
 
-To install this module, run the following commands:
-
-	perl Build.PL
-	./Build
-	./Build test
-	./Build install
-
-SUPPORT AND DOCUMENTATION
-
-After installing, you can find documentation for this module with the
-perldoc command.
-
-    perldoc bookbot
+    perldoc lib/bookbot
 
 LICENSE AND COPYRIGHT
 

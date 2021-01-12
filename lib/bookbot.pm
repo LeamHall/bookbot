@@ -40,7 +40,7 @@ Please report any bugs or feature requests to L<https://github.com/LeamHall/book
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc bookbot
+    perldoc lib/bookbot
 
 
 You can also look for information at:
@@ -51,13 +51,6 @@ You can also look for information at:
 
 L<https://github.com/LeamHall/bookbot>
 
-=item * CPAN Ratings
-
-L<https://cpanratings.perl.org/d/bookbot>
-
-=item * Search CPAN
-
-L<https://metacpan.org/release/bookbot>
 
 =back
 
