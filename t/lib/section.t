@@ -25,18 +25,15 @@ my $section   = Section->new(
   has_header  => 1,
 );
 isa_ok( $section, 'Section', 'Initial section');
-$section->_write_report;
 
 my $raw_data = "[1429.123.0456] Nowhere
   Al looked around. It was interesting.";
 
-#print "avg_sentence_length is ", $section->avg_sentence_length, ".\n";
-#ok( $section->avg_sentence_length() == 3, 'Returns average sentence length');
-ok( $section->avg_word_length()     == 5, 'Average word length == 5');
-ok( $section->flesch()              == 62.79, 'Report Flesch of 62.79');
+ok( $section->avg_sentence_length() == 3,     'Returns average sentence length');
+ok( $section->avg_word_length()     == 5,     'Returns Average word length');
+ok( $section->grade_level()         == 7.21,  'Returns proper grade level');
 ok( $section->header()              eq '[1429.123.0456] Nowhere', 'Returns header' );
 ok( $section->headless_data()       eq 'Al looked around. It was interesting.', 'Returns headless data');
-ok( $section->kincaid()             == 5.25, 'Report Kincaid of 5.25');
 ok( $section->number()              == 1, 'Returns section number' );
 ok( $section->raw_data()            eq $raw_data, 'Returns data');
 ok( $section->sentence_count()      == 2, 'Returns sentence count');
@@ -51,8 +48,7 @@ my $title_section = Section->new(
 isa_ok( $title_section, 'Section', 'Title section');
 ok( $title_section->header()  eq '[1429.123.0457] Nowhere', 'Title section returns header occuring after TITLE:');
 ok( $title_section->title()   eq 'An odd event', 'Title section returns title');
-#print "avg_sentence_length is ", $title_section->avg_sentence_length, ".\n";
-#ok( $title_section->avg_sentence_length() == 3, 'TEST Returns average sentence length');
+ok( $title_section->avg_sentence_length() == 7, 'TEST Returns average sentence length');
 
 my $headless_section = Section->new(
   raw_data    => "TITLE: Another odd event

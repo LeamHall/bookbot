@@ -56,18 +56,18 @@ sub new {
     _title          => undef,
   };
   bless $self, $class;
+  $self->_write_headless_data();
   $self->_write_report();
   return $self;
 }
 
-## The avg_sentence_length method in Text::IQ::EN does not work.
-# =head2 avg_sentence_length
-#
-# Returns the average sentence length.
-#
-# =cut
-# 
-# sub avg_sentence_length { $_[0]->{_report}->avg_sentence_length };
+=head2 avg_sentence_length
+
+Returns the average sentence length.
+
+=cut
+ 
+sub avg_sentence_length { $_[0]->{_report}->avg_sentence_length };
 
 =head2 avg_word_length
 
@@ -80,15 +80,15 @@ sub avg_word_length {
   return $self->{_report}->avg_word_length;
 }
 
-=head2 flesch
+=head2 grade_level
 
-Returns the Flesch score per: https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests
+Returns the Flesch-Kincaid Grade Level score per: https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests
 
 =cut
 
-sub flesch {
+sub grade_level {
   my ($self)  = @_;
-  my $f = sprintf("%0.2f", $self->{_report}->flesch());
+  my $f = sprintf("%0.2f", $self->{_report}->grade_level());
   return $f;
 }
 
@@ -119,30 +119,7 @@ Returns the raw_data, minus any header or title.
 
 =cut
 
-sub headless_data {
-  my ($self)  = @_;
-  my $data;
-  ($data = $self->raw_data) =~ s/^TITLE:.*\n//;
-  $data =~ s/^\s*//;
-  # TODO: Not sure this covers multiple empty blank lines.
-  $data =~ s/^.*\n// if $self->{_has_header};
-  $data =~ s/^\s*//;
-  chomp($data);
-  $self->{_headless_data} = $data; 
-  return $self->{_headless_data};
-}
-
-=head2 kinkaid
-
-Retuns the Kinkaid score per: https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests
-
-=cut
-
-sub kincaid {
-  my ($self)  = @_;
-  my $k = sprintf("%0.2f", $self->{_report}->kincaid);
-  return $k;
-}
+sub headless_data { return $_[0]->{_headless_data}; }
 
  
 =head2 number
@@ -168,7 +145,7 @@ Returns the number of sentences.
 
 =cut
 
-sub sentence_count { $_[0]->{_report}->num_sentences };
+sub sentence_count { $_[0]->{_report}->sentence_count };
 
 
 =head2 title
@@ -197,10 +174,7 @@ Returns the word count of the section, minus title or header.
 
 =cut
 
-sub word_count {
-  my ($self)  = @_;
-  return $self->{_report}->num_words;  
-}
+sub word_count { return $_[0]->{_report}->word_count;  }
 
 
 =head2 _write_report
@@ -211,12 +185,27 @@ Writes the report data.
 
 sub _write_report {
   my ($self)  = @_;
-  use Text::IQ::EN;
   my $text = $self->headless_data;
-  $self->{_report} = Text::IQ::EN->new( \$text );
+  use Report;
+  $self->{_report} = Report->new( string => $self->headless_data() );
 }
 
+=head2 _write_headless_data
 
+Writes the headless data.
+
+=cut
+
+sub _write_headless_data {
+  my ($self)  = @_;
+  my $data;
+  ($data = $self->raw_data) =~ s/^TITLE:.*\n//;
+  $data =~ s/^\s*//;
+  # TODO: Not sure this covers multiple empty blank lines.
+  $data =~ s/^.*\n// if $self->{_has_header};
+  $data =~ s/^\s*(.*)\s*$/$1/;
+  $self->{_headless_data} = $data;
+}
 
 =head1 AUTHOR
 
@@ -233,7 +222,7 @@ Please report any bugs or feature requests to L<https://github.com/LeamHall/book
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc Section
+    perldoc lib/Section
 
 
 You can also look for information at:
@@ -243,14 +232,6 @@ You can also look for information at:
 =item * GitHub Project Page
 
 L<https://github.com/LeamHall/bookbot>
-
-=item * CPAN Ratings
-
-L<https://cpanratings.perl.org/d/.>
-
-=item * Search CPAN
-
-L<https://metacpan.org/release/.>
 
 =back
 
