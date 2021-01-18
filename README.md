@@ -2,9 +2,9 @@
 
 Tools to collate files into a book.
  - Puts sections into one text document.
- - [TODO] Produces reading grade level report.
+ - Produces reading grade level report.
  - [TODO] Uses LaTeX for formatting.
- - [TODO] Produces word frequency counts.
+ - Produces word frequency counts.
 
 You can find documentation for this module with perldoc.
 
