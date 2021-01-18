@@ -74,5 +74,4 @@ isa_ok( $extra_lines_at_start_section, 'Section', 'Extra lines section');
 ok( $extra_lines_at_start_section->header() eq '[1429.123.0459] Nowhere', 'Extra lines still finds header');
 
 
-
 done_testing();

@@ -176,6 +176,44 @@ Returns the word count of the section, minus title or header.
 
 sub word_count { return $_[0]->{_report}->word_count;  }
 
+=head2 word_list
+
+Returns a hash of the words used, in lowercase, with the usage count of that word as the value.
+
+=cut
+
+sub word_list {
+  my $self  = shift;
+  my %word_list = $self->{_report}->sorted_word_list();
+  return %word_list;
+}
+
+=head2 write_report
+
+Writes the report file.
+
+=cut
+
+sub write_report {
+  my $self    = shift;
+  my $string  = "Grade Level: " . $self->grade_level() . "\n";
+  $string     .= "Word Frequency List:\n";
+  my %word_list = $self->{_report}->sorted_word_list();
+  my @unsorted_keys = ( keys %word_list );
+  my @sorted_keys = reverse ( sort { $a <=> $b } @unsorted_keys );
+  my $max_keys = 25;
+  foreach my $count ( @sorted_keys ){
+    $string .= "  $count  ";
+    foreach my $word ( @{$word_list{$count}} ){
+      $string .= " $word";
+    }
+    $string .= "\n";
+    $max_keys -= 1;
+    last unless $max_keys;
+  }
+  return $string;
+}
+
 
 =head2 _write_report
 

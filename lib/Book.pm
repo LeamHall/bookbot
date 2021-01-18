@@ -47,6 +47,7 @@ sub new {
     _file_name  => $data{file_name},
     _image      => $data{image},
     _output_dir => $data{output_dir},
+    _report_dir => $data{report_dir},
     _sections   => [],  
     _title      => $data{title},
     _url        => $data{url},
@@ -125,6 +126,14 @@ Returns the directory where the files are written.
 
 sub output_dir { $_[0]->{_output_dir} };
 
+=head2 report_dir
+
+Returns the directory where reports are written.
+
+=cut
+
+sub report_dir { $_[0]->{_report_dir} };
+
 =head2 sections
 
 Returns the array of section objects.
@@ -149,6 +158,24 @@ Return the URL of the book.
 
 sub url       { $_[0]->{_url}       };
 
+=head2 write_report
+
+Writes the report files.
+
+=cut
+
+sub write_report {
+  my $self  = shift;
+  my $num   = 1; 
+  foreach my $section ( @{$self->sections} ){
+    my $report_file = $self->book_dir . '/' . $self->report_dir . "/report_${num}.txt";
+    open( my $file, '>', $report_file ) or die "Can't open $report_file: $!";
+    print $file $section->write_report;
+    close($file);
+    $num += 1;
+  }
+
+}
 
 =head2 write_text
 

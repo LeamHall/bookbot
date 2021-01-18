@@ -106,6 +106,7 @@ my $book = Book->new(
   book_dir    => $configs{book_dir},
   file_name   => $configs{file_name},
   output_dir  => $configs{output_dir},
+  report_dir  => $configs{report_dir},
   title       => $configs{title}, 
 );
 
@@ -136,3 +137,7 @@ foreach my $file (@files) {
 close($dir);
 
 $book->write_text; 
+$book->write_report;
+
+
+

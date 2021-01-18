@@ -104,6 +104,27 @@ sub sentence_count {
   return $self->{_string} =~ tr/[?!.]//;
 }
 
+=head2 sorted_word_list 
+
+Returns a hash of lists, based on word frequency.
+
+=cut
+
+sub sorted_word_list {
+  my $self    = shift;
+  my %sorted_word_list;
+  my %word_hash = $self->word_list();
+  while ( my( $word, $count) = each %word_hash ) {
+    $sorted_word_list{$count} = [] unless defined( $sorted_word_list{$count} );
+    push ( @{$sorted_word_list{$count}}, $word );
+  }
+  foreach my $key ( keys %sorted_word_list ) {
+    my @array = sort( @{$sorted_word_list{$key}} ) ;
+    $sorted_word_list{$key} = [ sort( @{$sorted_word_list{$key}} ) ];
+  }
+  return %sorted_word_list;
+}
+
 =head2 syllable_count
 
 Returns the number of syllables for a word.
@@ -145,6 +166,22 @@ Returns the number of words.
 sub word_count {
   my $self        = shift;
   return scalar($self->words);
+}
+
+=head2 word_list 
+
+Returns hash of lowercase words as keys, count as values.
+
+=cut
+
+sub word_list {
+  my $self  = shift;
+  my %word_list;
+  foreach my $word ( $self->words ) {
+    $word = lc($word);
+    $word_list{$word} += 1;
+  }
+  return %word_list;
 }
 
 
