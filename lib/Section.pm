@@ -47,6 +47,7 @@ The section's title is set by the first data line beginning with "TITLE:".
 sub new {
   my ($class, %data) = @_;
   my $self = {
+    _file_name      => $data{file_name},
     _has_header     => $data{has_header} || 0,
     _header         => undef,
     _headless_data  => undef,
@@ -54,6 +55,7 @@ sub new {
     _raw_data       => $data{raw_data},
     _report         => undef,
     _title          => undef,
+
   };
   bless $self, $class;
   $self->_write_headless_data();
@@ -78,6 +80,17 @@ Returns the average word length.
 sub avg_word_length {
   my ( $self ) = @_;
   return $self->{_report}->avg_word_length;
+}
+
+=head2 file_name
+
+Returns the file name for the section
+
+=cut
+
+sub file_name {
+  my ($self)  = @_;
+  return $self->{_file_name}
 }
 
 =head2 grade_level
@@ -196,7 +209,8 @@ Writes the report file.
 
 sub write_report {
   my $self    = shift;
-  my $string  = "Grade Level: " . $self->grade_level() . "\n";
+  my $string  = "File: " . $self->file_name() . "\n";
+  $string     .= "Grade Level: " . $self->grade_level() . "\n";
   $string     .= "Word Frequency List:\n";
   my %word_list = $self->{_report}->sorted_word_list();
   my @unsorted_keys = ( keys %word_list );

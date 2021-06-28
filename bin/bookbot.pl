@@ -125,6 +125,7 @@ foreach my $file (@files) {
       close($fh);
     }
     my $section = Section->new(
+      file_name   => $file,
       number      => $section_number,
       raw_data    => $raw_data,
       has_header  => 1,

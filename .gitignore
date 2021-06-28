@@ -2,6 +2,7 @@
 *.swp
 *.swo
 
+book/
 _build/
 blib/
 bookbot*/

@@ -167,14 +167,27 @@ Writes the report files.
 sub write_report {
   my $self  = shift;
   my $num   = 1; 
+  my %grade_levels;
   foreach my $section ( @{$self->sections} ){
-    my $report_file = $self->book_dir . '/' . $self->report_dir . "/report_${num}.txt";
-    open( my $file, '>', $report_file ) or die "Can't open $report_file: $!";
-    print $file $section->write_report;
-    close($file);
+    $grade_levels{$section->grade_level()} = [] unless $grade_levels{$section->grade_level()};
+    push(@{$grade_levels{$section->grade_level()}}, $section->file_name);
+
+    my $section_report_file = $self->book_dir . '/' . $self->report_dir . '/report_' . $section->file_name;
+    open( my $section_file, '>', $section_report_file ) or die "Can't open $section_report_file: $!";
+    print $section_file $section->write_report;
+    close($section_file);
     $num += 1;
   }
 
+  my @grades            = keys ( %grade_levels);
+  @grades               = reverse sort @grades;
+  my $grade_report_file = $self->book_dir . '/' . $self->report_dir . '/grade_report.txt';
+  open ( my $grade_file, '>', $grade_report_file ) or die "Can't open $grade_report_file: $!";
+  foreach my $grade ( @grades ){
+    my $grade_string = join(' ', @{$grade_levels{$grade}});
+    print $grade_file "$grade : $grade_string \n";
+  } 
+  close($grade_file);
 }
 
 =head2 write_text
