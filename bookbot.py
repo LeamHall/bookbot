@@ -13,19 +13,38 @@
 # Figure out word list locations.
 # Spell checker?
 
+from configparser import ConfigParser
 
+DEFAULT_CONFIG = {
+    "author": "",
+    "book_dir": "book",
+    "reports_dir": "reports",
+    "scene_dir": "scenes",
+    "title": "",
+}
 
-# read config file
-# - book title
-# - section directory
-# - reports directory
-# - author
-def read_config():
-    pass
+CONFIG_FILE = "book_config.ini"
+
+def read_config(defaults = DEFAULT_CONFIG, config_file = CONFIG_FILE):
+    """ 
+        read_config takes the default configuration dict and a config file,
+        and returns a dict of configuration.
+    """
+    config = defaults
+    parser = ConfigParser()
+    try:
+        parser.read(config_file)
+        config.update(dict(parser['Book'])) 
+    except KeyError as e:
+        pass
+
+    return config 
+
 
 # check for/make directories
 def setup_dirs():
     pass
+
 
 # pull each section into its own object
 # - strip beginning and ending whitespace.
@@ -43,9 +62,11 @@ def setup_dirs():
 def parse_sections():
     pass
 
+
 # order sections so that prologues, epiloges, etc, are in place.
 def order_sections():
     pass
+
 
 # create header pages
 # - title
@@ -53,17 +74,21 @@ def order_sections():
 def create_header_pages():
     pass
 
+
 # write each section into the book.
 def collate_book():
     pass
+
 
 # Write book files; print, text, pdf(?)
 def write_book():
     pass
 
-# collate all reports. 
+
+# collate all reports.
 def collate_reports():
     pass
+
 
 # write all reports.
 def write_reports():
@@ -78,4 +103,3 @@ if __name__ == "__main__":
     write_book()
     collate_reports()
     write_reports()
-

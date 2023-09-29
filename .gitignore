@@ -3,12 +3,6 @@
 *.swo
 
 book/
-_build/
-blib/
-bookbot*/
-build/
-Build
-cover_db/
-MANIFEST*
-MYMETA*
 tmp/
+.coverage
+__pycache__/
