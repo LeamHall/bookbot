@@ -3,7 +3,7 @@
 SHELL = /usr/bin/bash
 
 test:
-	pytest -v
+	python -m unittest
 
 clean:
 	find . -type f -name "*.pyc" -exec rm {} \;
@@ -11,7 +11,7 @@ clean:
 
 all: clean test
 	python -m black -l79 .
-	coverage run -m pytest
+	coverage run -m unittest
 	coverage report -m 
 	-flake8
 

@@ -14,6 +14,8 @@
 # Spell checker?
 
 from configparser import ConfigParser
+import os
+
 
 DEFAULT_CONFIG = {
     "author": "",
@@ -25,25 +27,37 @@ DEFAULT_CONFIG = {
 
 CONFIG_FILE = "book_config.ini"
 
-def read_config(defaults = DEFAULT_CONFIG, config_file = CONFIG_FILE):
-    """ 
-        read_config takes the default configuration dict and a config file,
-        and returns a dict of configuration.
+
+def read_config(defaults=DEFAULT_CONFIG, config_file=CONFIG_FILE):
     """
+    Takes the default configuration dict and a config file,
+    and returns a dict of configuration.
+    """
+    # Need to test for missing config file.
+    # Set the blanks to something odd?
     config = defaults
     parser = ConfigParser()
     try:
         parser.read(config_file)
-        config.update(dict(parser['Book'])) 
+        config.update(dict(parser["Book"]))
     except KeyError as e:
         pass
 
-    return config 
+    return config
 
 
-# check for/make directories
-def setup_dirs():
-    pass
+def setup_dirs(conf=None, root_dir=None):
+    """
+    Creates the required directories if they are not available.
+    """
+    if not conf:
+        raise TypeError("program config required")
+    if not root_dir:
+        root_dir = os.getcwd()
+    for d in [conf["book_dir"], conf["reports_dir"], conf["scene_dir"]]:
+        new_dir = os.path.join(root_dir, d)
+        if not os.path.exists(new_dir):
+            os.mkdir(new_dir, mode=0o0750)
 
 
 # pull each section into its own object
@@ -96,8 +110,8 @@ def write_reports():
 
 
 if __name__ == "__main__":
-    read_config()
-    setup_dirs()
+    config = read_config()
+    setup_dirs(config)
     parse_sections()
     collate_book()
     write_book()
