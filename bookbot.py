@@ -40,7 +40,7 @@ def read_config(defaults=DEFAULT_CONFIG, config_file=CONFIG_FILE):
     try:
         parser.read(config_file)
         config.update(dict(parser["Book"]))
-    except KeyError as e:
+    except KeyError:
         pass
 
     return config
@@ -60,13 +60,58 @@ def setup_dirs(conf=None, root_dir=None):
             os.mkdir(new_dir, mode=0o0750)
 
 
+def lines_from_file(filename):
+    """
+    Returns a list of non-blank lines in the file.
+    """
+    file_data = []
+    with open(filename, "r") as in_f:
+        for line in in_f.readlines():
+            line = line.strip()
+            if line:
+                file_data.append(line)
+    return file_data
+
+
+def scrub_line(line):
+    """
+    Removes multiple whitespace sections in the middle of a line.
+    """
+    return " ".join(line.split())
+
+
+class Section:
+    def __init__(self, data={}):
+        self._lines = data.get("lines", [])
+        self._get_counts()
+
+    def __str__(self):
+        lines = "\n\n".join(self._lines)
+        return lines
+
+    def _get_counts(self):
+        """Sets the word and sentence counts."""
+        self.sentence_count = 0
+        self.word_count = 0
+        for line in self._lines:
+            self.word_count += len(line.split())
+            self.sentence_count += line.count(".")
+            self.sentence_count += line.count("!")
+            self.sentence_count += line.count("?")
+            self.average_sentence_length = round(
+                self.word_count / self.sentence_count
+            )
+
+
+## Working with individual Sections
 # pull each section into its own object
-# - strip beginning and ending whitespace.
-# - remove two or more spaces next to each other.
-# - break sentences into list items.
-# -- include closing quotes
-# - get word and sentence counts.
-# - get sentence lengths.
+# - [Done] strip beginning and ending whitespace.
+# - [Done] break sentences into list items.
+# -- [Done] include closing quotes
+# - [Done] remove two or more spaces next to each other.
+# - [Done] get word and sentence counts.
+# - [Done] get average sentence lengths.
+# - deal with section headers, like [this]
 # - format so it is easier to bold the chapter number and datetime stamp.
 # - format extended spacers
 # - do grade analysis.
@@ -78,6 +123,7 @@ def parse_sections():
 
 
 # order sections so that prologues, epiloges, etc, are in place.
+# - needs a book object
 def order_sections():
     pass
 

@@ -12,7 +12,7 @@ import unittest
 import bookbot as bb
 
 
-class TestBookBot(unittest.TestCase):
+class TestConfig(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.TemporaryDirectory()
         self.config_file = os.path.join(self.test_dir.name, "book_config.ini")
