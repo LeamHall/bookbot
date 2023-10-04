@@ -1,4 +1,4 @@
-# name    :  test/test_bookbot.py
+# name    :  test/test_chapter.py
 # version :  0.0.1
 # date    :  20230928
 # author  :  Leam Hall
@@ -12,11 +12,11 @@ import unittest
 import bookbot as bb
 
 
-class TestSection(unittest.TestCase):
+class TestChapter(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.TemporaryDirectory()
-        self.section_one_file = os.path.join(self.test_dir.name, "section_one")
-        with open(self.section_one_file, "w") as s1:
+        self.chapter_one_file = os.path.join(self.test_dir.name, "chapter_one")
+        with open(self.chapter_one_file, "w") as s1:
             s1.write("\n\n\n")
             s1.write("\n\n\n")
             s1.write("[1429.180.0745] Casimir District, Saorsa\n\n")
@@ -35,11 +35,11 @@ class TestSection(unittest.TestCase):
     def tearDown(self):
         self.test_dir.cleanup()
 
-    def test_read_section(self):
-        section_lines = bb.lines_from_file(self.section_one_file)
-        self.assertTrue(type(section_lines), list)
-        self.assertEqual(len(section_lines), 3)
-        self.assertTrue(section_lines[0].startswith("["))
+    def test_read_chapter(self):
+        chapter_lines = bb.lines_from_file(self.chapter_one_file)
+        self.assertTrue(type(chapter_lines), list)
+        self.assertEqual(len(chapter_lines), 3)
+        self.assertTrue(chapter_lines[0].startswith("["))
 
     def test_scrub_line(self):
         sample = "This sort        of thing shouldn't     pass!"
@@ -47,21 +47,21 @@ class TestSection(unittest.TestCase):
         result = bb.scrub_line(sample)
         self.assertEqual(result, expected)
 
-    def test_section_lines(self):
-        lines = bb.lines_from_file(self.section_one_file)
-        section_data = {
+    def test_chapter_lines(self):
+        lines = bb.lines_from_file(self.chapter_one_file)
+        chapter_data = {
             "lines": lines,
         }
-        section_1 = bb.Section(section_data)
-        self.assertEqual(len(section_1._lines), 3)
+        chapter_1 = bb.Chapter(chapter_data)
+        self.assertEqual(len(chapter_1._lines), 3)
 
-    def test_section_counts(self):
-        lines = bb.lines_from_file(self.section_one_file)
-        section_data = {
+    def test_chapter_counts(self):
+        lines = bb.lines_from_file(self.chapter_one_file)
+        chapter_data = {
             "lines": lines,
         }
-        section_1 = bb.Section(section_data)
+        chapter_1 = bb.Chapter(chapter_data)
         # This is currently +2 because of the header line.
-        self.assertEqual(section_1.sentence_count, 7)
-        self.assertEqual(section_1.word_count, 62)
-        self.assertEqual(section_1.average_sentence_length, 9)
+        self.assertEqual(chapter_1.sentence_count, 7)
+        self.assertEqual(chapter_1.word_count, 62)
+        self.assertEqual(chapter_1.average_sentence_length, 9)

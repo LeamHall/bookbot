@@ -1,11 +1,5 @@
 # BookBot
 
-Tools to collate files into a book.
- - [TODO] Puts sections into one text document.
- - [TODO] Produces reading grade level report.
- - [TODO] Uses LaTeX for formatting.
- - [TODO] Produces word frequency counts.
-
 
 LICENSE AND COPYRIGHT
 

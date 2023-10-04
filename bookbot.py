@@ -20,8 +20,9 @@ import os
 DEFAULT_CONFIG = {
     "author": "",
     "book_dir": "book",
+    "chapter_dir": "chapters",
+    "chapter_header": False,
     "reports_dir": "reports",
-    "scene_dir": "scenes",
     "title": "",
 }
 
@@ -54,7 +55,7 @@ def setup_dirs(conf=None, root_dir=None):
         raise TypeError("program config required")
     if not root_dir:
         root_dir = os.getcwd()
-    for d in [conf["book_dir"], conf["reports_dir"], conf["scene_dir"]]:
+    for d in [conf["book_dir"], conf["reports_dir"], conf["chapter_dir"]]:
         new_dir = os.path.join(root_dir, d)
         if not os.path.exists(new_dir):
             os.mkdir(new_dir, mode=0o0750)
@@ -75,12 +76,12 @@ def lines_from_file(filename):
 
 def scrub_line(line):
     """
-    Removes multiple whitespace sections in the middle of a line.
+    Removes multiple whitespaces in the middle of a line.
     """
     return " ".join(line.split())
 
 
-class Section:
+class Chapter:
     def __init__(self, data={}):
         self._lines = data.get("lines", [])
         self._get_counts()
@@ -103,28 +104,28 @@ class Section:
             )
 
 
-## Working with individual Sections
-# pull each section into its own object
+## Working with individual Chapters
+# pull each chapter into its own object
 # - [Done] strip beginning and ending whitespace.
 # - [Done] break sentences into list items.
 # -- [Done] include closing quotes
 # - [Done] remove two or more spaces next to each other.
 # - [Done] get word and sentence counts.
 # - [Done] get average sentence lengths.
-# - deal with section headers, like [this]
+# - deal with chapter headers, like [this]
 # - format so it is easier to bold the chapter number and datetime stamp.
 # - format extended spacers
 # - do grade analysis.
 # - count words used for each grade's word lists.
 # - no indent for epub, has para spacing.
 # - indent for print, no para spacing.
-def parse_sections():
+def parse_chapters():
     pass
 
 
-# order sections so that prologues, epiloges, etc, are in place.
+# order chapters so that prologues, epiloges, etc, are in place.
 # - needs a book object
-def order_sections():
+def order_chapters():
     pass
 
 
@@ -135,9 +136,16 @@ def create_header_pages():
     pass
 
 
-# write each section into the book.
-def collate_book():
-    pass
+# write each chapter into the book.
+def collate_book(chapters = [], chapter_divider = ""):
+    """ Collate a list of chapters, separated by a divider, into a string. """
+    book_data = ""
+    for chapter in chapters:
+        if book_data:
+            book_data += "\n{}\n".format(chapter_divider) 
+        book_data += str(chapter.__str__())
+    return book_data
+
 
 
 # Write book files; print, text, pdf(?)
@@ -158,7 +166,7 @@ def write_reports():
 if __name__ == "__main__":
     config = read_config()
     setup_dirs(config)
-    parse_sections()
+    parse_chapters()
     collate_book()
     write_book()
     collate_reports()

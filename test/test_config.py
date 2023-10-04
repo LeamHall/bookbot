@@ -1,4 +1,4 @@
-# name    :  test/test_bookbot.py
+# name    :  test/test_config.py
 # version :  0.0.1
 # date    :  20230928
 # author  :  Leam Hall
@@ -20,6 +20,7 @@ class TestConfig(unittest.TestCase):
             f.write("[Book]\n")
             f.write("title = Agent\n")
             f.write("author : Leam Hall\n")
+            f.write("chapter_header : True\n")
 
     def tearDown(self):
         self.test_dir.cleanup()
@@ -29,8 +30,9 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(config["author"], "")
         self.assertEqual(config["book_dir"], "book")
         self.assertEqual(config["reports_dir"], "reports")
-        self.assertEqual(config["scene_dir"], "scenes")
+        self.assertEqual(config["chapter_dir"], "chapters")
         self.assertEqual(config["title"], "")
+        self.assertFalse(config["chapter_header"])
         self.assertNotIn("stuff", config.keys())
 
     def test_read_config(self):
@@ -38,7 +40,8 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(config["author"], "Leam Hall")
         self.assertEqual(config["book_dir"], "book")
         self.assertEqual(config["reports_dir"], "reports")
-        self.assertEqual(config["scene_dir"], "scenes")
+        self.assertEqual(config["chapter_dir"], "chapters")
+        self.assertTrue(config["chapter_header"])
         self.assertEqual(config["title"], "Agent")
 
     def test_setup_dirs_no_config(self):
@@ -48,7 +51,7 @@ class TestConfig(unittest.TestCase):
     def test_setup_dirs_no_root_dir(self):
         test_config = bb.read_config(config_file=self.config_file)
         bb.setup_dirs(conf=test_config)
-        dirs = ["book", "reports", "scenes"]
+        dirs = ["book", "reports", "chapters"]
         for d in dirs:
             self.assertTrue(os.path.exists(d))
         # This makes directories in the cwd, need to remove them.
@@ -59,7 +62,7 @@ class TestConfig(unittest.TestCase):
     def test_setup_dirs_pass(self):
         test_config = bb.read_config(config_file=self.config_file)
         bb.setup_dirs(conf=test_config, root_dir=self.test_dir.name)
-        dirs = ["book", "reports", "scenes"]
+        dirs = ["book", "reports", "chapters"]
         for d in dirs:
             test_dir = os.path.join(self.test_dir.name, d)
             self.assertTrue(os.path.exists(test_dir))
