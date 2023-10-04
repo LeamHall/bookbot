@@ -137,15 +137,14 @@ def create_header_pages():
 
 
 # write each chapter into the book.
-def collate_book(chapters = [], chapter_divider = ""):
-    """ Collate a list of chapters, separated by a divider, into a string. """
+def collate_book(chapters=[], chapter_divider=""):
+    """Collate a list of chapters, separated by a divider, into a string."""
     book_data = ""
     for chapter in chapters:
         if book_data:
-            book_data += "\n{}\n".format(chapter_divider) 
+            book_data += "\n{}\n".format(chapter_divider)
         book_data += str(chapter.__str__())
     return book_data
-
 
 
 # Write book files; print, text, pdf(?)
