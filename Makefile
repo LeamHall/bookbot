@@ -2,6 +2,7 @@
 
 SHELL = /usr/bin/bash
 
+.PHONY:test
 test:
 	python -m unittest
 

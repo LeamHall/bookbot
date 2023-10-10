@@ -29,6 +29,30 @@ DEFAULT_CONFIG = {
 CONFIG_FILE = "book_config.ini"
 
 
+def list_of_files(target_dir):
+    """
+    Takes a target directory and returns the list of filenames.
+    """
+    filenames = []
+    for root, dirs, files in os.walk(target_dir):
+        for file in files:
+            filenames.append(file)
+    return filenames
+
+
+def lines_from_file(filename):
+    """
+    Returns a list of non-blank lines in the file.
+    """
+    file_data = []
+    with open(filename, "r") as in_f:
+        for line in in_f.readlines():
+            line = line.strip()
+            if line:
+                file_data.append(line)
+    return file_data
+
+
 def read_config(defaults=DEFAULT_CONFIG, config_file=CONFIG_FILE):
     """
     Takes the default configuration dict and a config file,
@@ -59,19 +83,6 @@ def setup_dirs(conf=None, root_dir=None):
         new_dir = os.path.join(root_dir, d)
         if not os.path.exists(new_dir):
             os.mkdir(new_dir, mode=0o0750)
-
-
-def lines_from_file(filename):
-    """
-    Returns a list of non-blank lines in the file.
-    """
-    file_data = []
-    with open(filename, "r") as in_f:
-        for line in in_f.readlines():
-            line = line.strip()
-            if line:
-                file_data.append(line)
-    return file_data
 
 
 def scrub_line(line):
