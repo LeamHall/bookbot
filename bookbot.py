@@ -158,8 +158,25 @@ def collate_book(chapters=[], chapter_divider=""):
     return book_data
 
 
+class BookBuilder:
+    def __init__(self, config=DEFAULT_CONFIG, chapters=[]):
+        self.config = config
+        self.chapters = chapters
+
+    def build(self):
+        book = Book()
+        book.author = self.config["author"]
+        book.chapters = self.chapters
+        return book
+
+
+class Book:
+    def __init__(self):
+        pass
+
+
 # Write book files; print, text, pdf(?)
-def write_book():
+def write_book(book):
     pass
 
 
