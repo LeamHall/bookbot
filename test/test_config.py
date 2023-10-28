@@ -20,7 +20,6 @@ class TestConfig(unittest.TestCase):
             f.write("[Book]\n")
             f.write("title = Agent\n")
             f.write("author : Leam Hall\n")
-            f.write("chapter_header : True\n")
 
     def tearDown(self):
         self.test_dir.cleanup()
@@ -32,7 +31,6 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(config["reports_dir"], "reports")
         self.assertEqual(config["chapter_dir"], "chapters")
         self.assertEqual(config["title"], "")
-        self.assertFalse(config["chapter_header"])
         self.assertNotIn("stuff", config.keys())
 
     def test_read_config(self):
@@ -41,7 +39,6 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(config["book_dir"], "book")
         self.assertEqual(config["reports_dir"], "reports")
         self.assertEqual(config["chapter_dir"], "chapters")
-        self.assertTrue(config["chapter_header"])
         self.assertEqual(config["title"], "Agent")
 
     def test_setup_dirs_no_config(self):

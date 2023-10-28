@@ -53,15 +53,36 @@ class TestChapter(unittest.TestCase):
             "lines": lines,
         }
         chapter_1 = bb.Chapter(chapter_data)
-        self.assertEqual(len(chapter_1._lines), 3)
+        self.assertEqual(len(chapter_1._lines), 2)
 
-    def test_chapter_counts(self):
+    # def test_chapter_counts(self):
+    #    lines = bb.lines_from_file(self.chapter_one_file)
+    #    chapter_data = {
+    #        "lines": lines,
+    #    }
+    #    chapter_1 = bb.Chapter(chapter_data)
+    #    self.assertEqual(chapter_1.sentence_count, 5)
+    #    self.assertEqual(chapter_1.word_count, 58)
+    #    self.assertEqual(chapter_1.average_sentence_length, 12)
+
+    def test_order_chapters(self):
+        orig_chapters = [
+            "author", "this", "that", "epilogue", "title", "isbn", "prologue"]
+        chapters, specials = bb.order_chapters(
+            orig_chapters, bb.SPECIAL_LIST)
+        self.assertEqual(chapters, ["this", "that"])
+        self.assertEqual(specials, [
+            "title", "isbn", "prologue", "epilogue", "author"])
+
+    def test_chapter_header(self):
         lines = bb.lines_from_file(self.chapter_one_file)
         chapter_data = {
             "lines": lines,
         }
         chapter_1 = bb.Chapter(chapter_data)
-        # This is currently +2 because of the header line.
-        self.assertEqual(chapter_1.sentence_count, 7)
-        self.assertEqual(chapter_1.word_count, 62)
-        self.assertEqual(chapter_1.average_sentence_length, 9)
+        self.assertEqual(
+            chapter_1.header,
+            "[1429.180.0745] Casimir District, Saorsa"
+        )
+
+

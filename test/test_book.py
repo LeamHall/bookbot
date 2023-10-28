@@ -14,8 +14,8 @@ import bookbot as bb
 class TestCollate(unittest.TestCase):
     def setUp(self):
         self.chapters = [
-            bb.Chapter(data={"lines": ["Line one.", "Line two."]}),
-            bb.Chapter(data={"lines": ["Lino unu.", "Lino du."]}),
+            bb.Chapter(data={"lines": ["header", "Line one.", "Line two."]}),
+            bb.Chapter(data={"lines": ["header", "Lino unu.", "Lino du."]}),
         ]
         self.config = bb.DEFAULT_CONFIG
         self.test_dir = tempfile.TemporaryDirectory()

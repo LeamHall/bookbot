@@ -17,16 +17,19 @@ from configparser import ConfigParser
 import os
 
 
+CONFIG_FILE = "book_config.ini"
+
 DEFAULT_CONFIG = {
     "author": "",
     "book_dir": "book",
     "chapter_dir": "chapters",
-    "chapter_header": False,
+    "chapter_divider": "__page_break__",
     "reports_dir": "reports",
     "title": "",
 }
 
-CONFIG_FILE = "book_config.ini"
+SPECIAL_LIST = [
+    'title', 'isbn', 'prologue', 'epilogue', 'afterward', 'author', 'more']
 
 
 def list_of_files(target_dir):
@@ -95,24 +98,27 @@ def scrub_line(line):
 class Chapter:
     def __init__(self, data={}):
         self._lines = data.get("lines", [])
-        self._get_counts()
+        self.header = self._lines[0]
+        self._lines = self._lines[1:]
+        # self._get_counts()
 
     def __str__(self):
         lines = "\n\n".join(self._lines)
         return lines
 
-    def _get_counts(self):
-        """Sets the word and sentence counts."""
-        self.sentence_count = 0
-        self.word_count = 0
-        for line in self._lines:
-            self.word_count += len(line.split())
-            self.sentence_count += line.count(".")
-            self.sentence_count += line.count("!")
-            self.sentence_count += line.count("?")
-            self.average_sentence_length = round(
-                self.word_count / self.sentence_count
-            )
+    # This should be in the Report
+    # def _get_counts(self):
+    #    """Sets the word and sentence counts."""
+    #    self.sentence_count = 0
+    #    self.word_count = 0
+    #    for line in self._lines:
+    #        self.word_count += len(line.split())
+    #        self.sentence_count += line.count(".")
+    #        self.sentence_count += line.count("!")
+    #        self.sentence_count += line.count("?")
+    #        self.average_sentence_length = round(
+    #            self.word_count / self.sentence_count
+    #        )
 
 
 ## Working with individual Chapters
@@ -123,8 +129,8 @@ class Chapter:
 # - [Done] remove two or more spaces next to each other.
 # - [Done] get word and sentence counts.
 # - [Done] get average sentence lengths.
-# - deal with chapter headers, like [this]
-# - format so it is easier to bold the chapter number and datetime stamp.
+# - [done] deal with chapter headers, like [this]
+# - [done] format to be easier to bold the chapter number and datetime stamp.
 # - format extended spacers
 # - do grade analysis.
 # - count words used for each grade's word lists.
@@ -136,8 +142,24 @@ def parse_chapters():
 
 # order chapters so that prologues, epiloges, etc, are in place.
 # - needs a book object
-def order_chapters():
-    pass
+def order_chapters(chapters, special_list):
+    """
+    Removes special chapters from chapter list, and returns the reduced
+    list of chapters, and the specificaly sorted order of specials.
+    """
+    new_chapters = list()
+    temp_specials = list()
+    specials = list()
+    for chapter in chapters:
+        if chapter in special_list:
+            temp_specials.append(chapter)
+        else:
+            new_chapters.append(chapter)
+    for special in special_list:
+        if special in temp_specials:
+            specials.append(special)
+
+    return new_chapters, specials
 
 
 # create header pages
@@ -148,22 +170,25 @@ def create_header_pages():
 
 
 # write each chapter into the book.
-def collate_book(chapters=[], chapter_divider=""):
+def collate_book(chapters=[], specials = [], chapter_divider = ""):
     """Collate a list of chapters, separated by a divider, into a string."""
     book_data = ""
     for chapter in chapters:
         if book_data:
             book_data += "\n{}\n".format(chapter_divider)
+        # This no longer works, due to the header and specials.
         book_data += str(chapter.__str__())
     return book_data
 
 
 class BookBuilder:
-    def __init__(self, config=DEFAULT_CONFIG, chapters=[]):
+    def __init__(self, config=DEFAULT_CONFIG, chapters=[], specials = {}):
         self.config = config
         self.chapters = chapters
+        self.specials = specials
 
     def build(self):
+        """ Returns the Book object. """
         book = Book()
         book.author = self.config["author"]
         book.chapters = self.chapters

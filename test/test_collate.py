@@ -14,8 +14,8 @@ import bookbot as bb
 class TestCollate(unittest.TestCase):
     def setUp(self):
         self.chapters = [
-            bb.Chapter(data={"lines": ["Line one.", "Line two."]}),
-            bb.Chapter(data={"lines": ["Lino unu.", "Lino du."]}),
+            bb.Chapter(data={"lines": ["header", "Line one.", "Line two."]}),
+            bb.Chapter(data={"lines": ["header", "Lino unu.", "Lino du."]}),
         ]
         self.test_dir = tempfile.TemporaryDirectory()
         filenames = ["01_10.txt", "01_20.txt", "02_10.txt"]
@@ -39,7 +39,7 @@ class TestCollate(unittest.TestCase):
 
     def test_collate_with_data_and_sep(self):
         expected = "Line one.\n\nLine two.\n##\nLino unu.\n\nLino du."
-        result = bb.collate_book(self.chapters, "##")
+        result = bb.collate_book(self.chapters, chapter_divider = "##")
         self.assertEqual(result, expected)
 
     def test_collate_file_list(self):

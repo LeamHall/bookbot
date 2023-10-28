@@ -11,8 +11,7 @@ clean:
 	find . -type f -name "*.swp" -exec rm {} \;
 
 all: clean test
-	python -m black -l79 .
 	coverage run -m unittest
 	coverage report -m 
-	-flake8
+	-flake8 --ignore E251,E266,W391
 
