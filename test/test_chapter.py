@@ -35,17 +35,24 @@ class TestChapter(unittest.TestCase):
     def tearDown(self):
         self.test_dir.cleanup()
 
+    def test_chapter_type_isbn(self):
+        isbn_file = os.path.join(self.test_dir.name, "isbn.txt")
+        with open(isbn_file, "w") as s1:
+            s1.write("\nisbn\n")
+        expected = "isbn"
+        result = bb.chapter_type(isbn_file)
+        self.assertEqual(result, expected)
+
+    def test_chapter_type_chapter(self):
+        expected = "chapter"
+        result = bb.chapter_type(self.chapter_one_file)
+        self.assertEqual(result, expected)
+
     def test_read_chapter(self):
         chapter_lines = bb.lines_from_file(self.chapter_one_file)
         self.assertTrue(type(chapter_lines), list)
         self.assertEqual(len(chapter_lines), 3)
         self.assertTrue(chapter_lines[0].startswith("["))
-
-    def test_scrub_line(self):
-        sample = "This sort        of thing shouldn't     pass!"
-        expected = "This sort of thing shouldn't pass!"
-        result = bb.scrub_line(sample)
-        self.assertEqual(result, expected)
 
     def test_chapter_lines(self):
         lines = bb.lines_from_file(self.chapter_one_file)
@@ -53,7 +60,7 @@ class TestChapter(unittest.TestCase):
             "lines": lines,
         }
         chapter_1 = bb.Chapter(chapter_data)
-        self.assertEqual(len(chapter_1._lines), 2)
+        self.assertEqual(len(chapter_1.lines), 2)
 
     # def test_chapter_counts(self):
     #    lines = bb.lines_from_file(self.chapter_one_file)
@@ -85,4 +92,22 @@ class TestChapter(unittest.TestCase):
             "[1429.180.0745] Casimir District, Saorsa"
         )
 
+    def test_chapter_no_header(self):
+        chapter_data = {
+            "lines" : ["one", "two", "three"],
+            "has_header" : False
+        }
+        chapter_1 = bb.Chapter(chapter_data)
+        self.assertFalse(chapter_1.header)
+        self.assertEqual(chapter_1.__str__(), "one\n\ntwo\n\nthree")
+
+
+    def test_scrub_line(self):
+        chapter_data = {
+            "lines" : [ "This sort        of thing shouldn't     pass!"],
+            "has_header" : False
+        }
+        chapter_1 = bb.Chapter(chapter_data)
+        expected = "This sort of thing shouldn't pass!"
+        self.assertEqual(chapter_1.lines[0], expected)
 

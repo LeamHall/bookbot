@@ -15,7 +15,7 @@
 
 from configparser import ConfigParser
 import os
-
+from pathlib import Path
 
 CONFIG_FILE = "book_config.ini"
 
@@ -23,7 +23,7 @@ DEFAULT_CONFIG = {
     "author": "",
     "book_dir": "book",
     "chapter_dir": "chapters",
-    "chapter_divider": "__page_break__",
+    "page_break": "__page_break__",
     "reports_dir": "reports",
     "title": "",
 }
@@ -54,6 +54,14 @@ def lines_from_file(filename):
             if line:
                 file_data.append(line)
     return file_data
+
+
+def chapter_type(filename):
+    """ Returns the type of the chapter, based on filename. """
+    p = Path(filename)
+    if p.stem in SPECIAL_LIST:
+        return p.stem 
+    return "chapter"
 
 
 def read_config(defaults=DEFAULT_CONFIG, config_file=CONFIG_FILE):
@@ -88,24 +96,32 @@ def setup_dirs(conf=None, root_dir=None):
             os.mkdir(new_dir, mode=0o0750)
 
 
-def scrub_line(line):
-    """
-    Removes multiple whitespaces in the middle of a line.
-    """
-    return " ".join(line.split())
-
-
 class Chapter:
     def __init__(self, data={}):
-        self._lines = data.get("lines", [])
-        self.header = self._lines[0]
-        self._lines = self._lines[1:]
-        # self._get_counts()
+        self.lines = data.get("lines", [])
+        self._has_header = data.get("has_header", True)
+        self._set_header()
+        self._scrub_lines()
 
     def __str__(self):
-        lines = "\n\n".join(self._lines)
+        lines = "\n\n".join(self.lines)
         return lines
 
+    def _set_header(self):
+        """ Sets the header if present, otherwise to an empty string. """
+        if self._has_header:
+            self.header = self.lines[0]
+            self.lines = self.lines[1:]
+        else:
+            self.header = ""
+   
+    def _scrub_lines(self):
+        """ Removes multiple whitespaces in the middle of a line.  """
+        clean_lines = []
+        for line in self.lines:
+            clean_lines.append(" ".join(line.split()))
+        self.lines = clean_lines
+             
     # This should be in the Report
     # def _get_counts(self):
     #    """Sets the word and sentence counts."""
@@ -162,23 +178,17 @@ def order_chapters(chapters, special_list):
     return new_chapters, specials
 
 
-# create header pages
-# - title
-# - copyright, etc
-def create_header_pages():
-    pass
-
 
 # write each chapter into the book.
-def collate_book(chapters=[], specials = [], chapter_divider = ""):
-    """Collate a list of chapters, separated by a divider, into a string."""
-    book_data = ""
-    for chapter in chapters:
-        if book_data:
-            book_data += "\n{}\n".format(chapter_divider)
-        # This no longer works, due to the header and specials.
-        book_data += str(chapter.__str__())
-    return book_data
+# def collate_book(chapters=[], specials = [], page_break = ""):
+#    """Collate a list of chapters, separated by a divider, into a string."""
+#    book_data = ""
+#     for chapter in chapters:
+#        if book_data:
+#            book_data += "\n{}\n".format(page_break)
+#        # This no longer works, due to the header and specials.
+#        book_data += str(chapter.__str__())
+#    return book_data
 
 
 class BookBuilder:
@@ -186,18 +196,36 @@ class BookBuilder:
         self.config = config
         self.chapters = chapters
         self.specials = specials
+        self.text = ""
+
+    def write_chapter(
+        self, chapter, chapter_number = 0, is_numbered = True, has_header = True):
+        """ Returns a string of the chapter, with additions. """
+        text = ""
+        page_break = self.config["page_break"]
+     
+        for line in chapter.lines:
+            text += line + "\n\n"
+ 
+        return text 
 
     def build(self):
         """ Returns the Book object. """
         book = Book()
         book.author = self.config["author"]
-        book.chapters = self.chapters
+        text = ""
+        for chapter in self.chapters:
+            text += self.write_chapter(chapter, chapter_number = 0,
+                is_numbered = False,
+                has_header = False,
+            )
+            book.text += text
         return book
 
 
 class Book:
-    def __init__(self):
-        pass
+    def __init__(self, text = ""):
+        self.text = text
 
 
 # Write book files; print, text, pdf(?)

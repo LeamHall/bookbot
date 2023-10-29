@@ -29,6 +29,16 @@ class TestCollate(unittest.TestCase):
     def tearDown(self):
         self.test_dir.cleanup()
 
+    def test_write_chapter_plain(self):
+        builder = bb.BookBuilder()
+        expected = "Line one.\n\nLine two.\n\n"
+        result = builder.write_chapter(
+            self.chapters[0],
+            is_numbered = False,
+            has_header = False,
+        )
+        self.assertEqual(result, expected)
+
     def test_book_builder(self):
         builder = bb.BookBuilder()
         self.assertEqual(builder.config["author"], "")
@@ -39,14 +49,10 @@ class TestCollate(unittest.TestCase):
         result = builder.build()
         self.assertEqual(type(result), bb.Book)
         self.assertEqual(result.author, "")
-        self.assertEqual(result.chapters, [])
+        self.assertEqual(result.text, "")
 
     def test_book_with_config(self):
         builder = bb.BookBuilder(config={"author": "Leam Hall"})
         book = builder.build()
         self.assertEqual(book.author, "Leam Hall")
 
-    def test_book_with_chapters(self):
-        builder = bb.BookBuilder(chapters=self.chapters)
-        book = builder.build()
-        self.assertEqual(len(book.chapters), 2)
