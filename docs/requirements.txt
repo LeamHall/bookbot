@@ -1,0 +1,24 @@
+
+
+
+Product Requirements
+1.  Will take text files in a single directory, sort them by filename,
+    modify them as chapters or specific sections, and collate them.
+2.  Will be a single file application.
+3.  May take word lists for grade level reading reports. 
+4.  The output will be a single text file.
+5.  The program will not to spell or grammar checking.
+6.  The program will use specific directories for output and input.
+7.  The program will use a config file for book specific data.
+8.  The program will be runnable from a shared location, such as 
+    /usr/local/bin, when the user is in the directory for the book.
+9.  The program uses standard English punctuation for determining sentences. 
+
+
+Process Requirements
+1.  Will use Python and its standard lib for all code. Nothing else.
+2.  Third-party code may be used by the developers. For example, black, 
+    flake8, coverage, etc.
+3.  The testing framework will be unittest. 
+4.  Where practical, the code will conform to good Python style.
+
