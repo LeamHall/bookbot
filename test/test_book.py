@@ -31,13 +31,8 @@ class TestCollate(unittest.TestCase):
 
     def test_write_chapter_plain(self):
         builder = bb.BookBuilder()
-        expected = "Line one.\n\nLine two.\n\n"
-        result = builder.write_chapter(
-            self.chapters[0],
-            is_numbered = False,
-            has_header = False,
-        )
-        self.assertEqual(result, expected)
+        result = builder.write_chapter(self.chapters[0])
+        self.assertIn("Chapter", result)
 
     def test_book_builder(self):
         builder = bb.BookBuilder()
@@ -49,10 +44,38 @@ class TestCollate(unittest.TestCase):
         result = builder.build()
         self.assertEqual(type(result), bb.Book)
         self.assertEqual(result.author, "")
-        self.assertEqual(result.text, "")
+        self.assertEqual(result.text, "\n\n")
 
     def test_book_with_config(self):
         builder = bb.BookBuilder(config={"author": "Leam Hall"})
         book = builder.build()
         self.assertEqual(book.author, "Leam Hall")
 
+    def test_book_text(self):
+        builder = bb.BookBuilder
+        book = builder(chapters=self.chapters).build()
+        self.assertGreater(len(book.text), 100)
+
+    def test_book_filename(self):
+        expected = "al_saves_the_universe.txt"
+        config = {
+            "title": "  Al $$ Saves the () Universe",
+        }
+        result = bb.book_filename(config, "txt")
+        self.assertEqual(result, expected)
+
+    def test_write_book(self):
+        config = {
+            "title": "  Al Saves the () Universe",
+            "book_dir": self.test_dir.name,
+        }
+        builder = bb.BookBuilder
+        book = builder(chapters=self.chapters).build()
+        expected_file = os.path.join(
+            self.test_dir.name, "al_saves_the_universe.txt"
+        )
+        bb.write_book(book, config)
+        self.assertTrue(os.path.exists(expected_file))
+        with open(expected_file, "r") as ef:
+            data = ef.read()
+        self.assertIn("unu", data)

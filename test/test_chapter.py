@@ -22,13 +22,13 @@ class TestChapter(unittest.TestCase):
             s1.write("[1429.180.0745] Casimir District, Saorsa\n\n")
             s1.write("\n\n\n")
             s1.write("\n\n\n")
-            s1.write(
-                "Al sat with her dad on the rusty hood of the family car. The view from Solomon Mountain seemed to go on forever. Twenty kilometers away and two kilometers down she could see her hometown. A light morning fog, and the quiet, raised up and comforted her.\n"
-            )
+            s1.write("Al sat with her dad on the rusty hood of the car. ")
+            s1.write("The view from Solomon Mountain seemed to go on and on. ")
+            s1.write("Twenty kilometers away and two klicks down she could ")
+            s1.write("see her hometown. A light morning fog, and the quiet, ")
+            s1.write("raised up and comforted her.\n")
             s1.write("\n")
-            s1.write(
-                "A staggered line of four large planes approached from the east.\n"
-            )
+            s1.write("A line of four large planes approached from the east.\n")
             s1.write("\n\n\n")
             s1.write("\n\n\n")
 
@@ -74,12 +74,19 @@ class TestChapter(unittest.TestCase):
 
     def test_order_chapters(self):
         orig_chapters = [
-            "author", "this", "that", "epilogue", "title", "isbn", "prologue"]
-        chapters, specials = bb.order_chapters(
-            orig_chapters, bb.SPECIAL_LIST)
+            "author",
+            "this",
+            "that",
+            "epilogue",
+            "title",
+            "isbn",
+            "prologue",
+        ]
+        chapters, specials = bb.order_chapters(orig_chapters, bb.SPECIAL_LIST)
         self.assertEqual(chapters, ["this", "that"])
-        self.assertEqual(specials, [
-            "title", "isbn", "prologue", "epilogue", "author"])
+        self.assertEqual(
+            specials, ["title", "isbn", "prologue", "epilogue", "author"]
+        )
 
     def test_chapter_header(self):
         lines = bb.lines_from_file(self.chapter_one_file)
@@ -88,26 +95,49 @@ class TestChapter(unittest.TestCase):
         }
         chapter_1 = bb.Chapter(chapter_data)
         self.assertEqual(
-            chapter_1.header,
-            "[1429.180.0745] Casimir District, Saorsa"
+            chapter_1.header, "[1429.180.0745] Casimir District, Saorsa"
         )
 
     def test_chapter_no_header(self):
-        chapter_data = {
-            "lines" : ["one", "two", "three"],
-            "has_header" : False
-        }
+        chapter_data = {"lines": ["one", "two", "three"], "has_header": False}
         chapter_1 = bb.Chapter(chapter_data)
         self.assertFalse(chapter_1.header)
         self.assertEqual(chapter_1.__str__(), "one\n\ntwo\n\nthree")
 
-
     def test_scrub_line(self):
         chapter_data = {
-            "lines" : [ "This sort        of thing shouldn't     pass!"],
-            "has_header" : False
+            "lines": ["This sort        of thing shouldn't     pass!"],
+            "has_header": False,
         }
         chapter_1 = bb.Chapter(chapter_data)
         expected = "This sort of thing shouldn't pass!"
         self.assertEqual(chapter_1.lines[0], expected)
 
+    def test_set_type_no_header(self):
+        chapter_data = {
+            "lines": ["prologue", "one", "two", "three"],
+            "has_header": False,
+        }
+        c = bb.Chapter(chapter_data)
+        self.assertEqual(c.type, "prologue")
+
+    def test_set_type_with_header(self):
+        chapter_data = {
+            "lines": ["some date", "prologue", "one", "two", "three"],
+            "has_header": True,
+        }
+        c = bb.Chapter(chapter_data)
+        self.assertEqual(c.type, "prologue")
+
+    def test_set_type_chapter_with_header(self):
+        chapter_data = {
+            "lines": ["some date", "one", "two", "three"],
+            "has_header": True,
+        }
+        c = bb.Chapter(chapter_data)
+        self.assertEqual(c.type, "chapter")
+
+    def test_set_type_chapter_no_header(self):
+        chapter_data = {"lines": ["one", "two", "three"], "has_header": False}
+        c = bb.Chapter(chapter_data)
+        self.assertEqual(c.type, "chapter")
