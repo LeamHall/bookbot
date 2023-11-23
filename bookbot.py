@@ -9,12 +9,12 @@
 
 ## Notes
 
-## TODO
-# Figure out word list locations.
-# Spell checker?
-
 from configparser import ConfigParser
+import errno
 import os
+from pathlib import Path
+import re
+import sys
 
 
 CONFIG_FILE = "book_config.ini"
@@ -23,13 +23,20 @@ DEFAULT_CONFIG = {
     "author": "",
     "book_dir": "book",
     "chapter_dir": "chapters",
-    "chapter_divider": "__page_break__",
+    "page_break": "\n__page_break__\n",
     "reports_dir": "reports",
     "title": "",
 }
 
 SPECIAL_LIST = [
-    'title', 'isbn', 'prologue', 'epilogue', 'afterward', 'author', 'more']
+    "title",
+    "isbn",
+    "prologue",
+    "epilogue",
+    "afterward",
+    "author",
+    "more",
+]
 
 
 def list_of_files(target_dir):
@@ -54,6 +61,14 @@ def lines_from_file(filename):
             if line:
                 file_data.append(line)
     return file_data
+
+
+def chapter_type(filename):
+    """Returns the type of the chapter, based on filename."""
+    p = Path(filename)
+    if p.stem in SPECIAL_LIST:
+        return p.stem
+    return "chapter"
 
 
 def read_config(defaults=DEFAULT_CONFIG, config_file=CONFIG_FILE):
@@ -88,23 +103,41 @@ def setup_dirs(conf=None, root_dir=None):
             os.mkdir(new_dir, mode=0o0750)
 
 
-def scrub_line(line):
-    """
-    Removes multiple whitespaces in the middle of a line.
-    """
-    return " ".join(line.split())
-
-
 class Chapter:
     def __init__(self, data={}):
-        self._lines = data.get("lines", [])
-        self.header = self._lines[0]
-        self._lines = self._lines[1:]
-        # self._get_counts()
+        self.lines = data.get("lines", [])
+        self._has_header = data.get("has_header", True)
+        self._set_header()
+        self._scrub_lines()
+        self._set_type()
 
     def __str__(self):
-        lines = "\n\n".join(self._lines)
+        lines = "\n\n".join(self.lines)
         return lines
+
+    def _set_header(self):
+        """Sets the header if present, otherwise to an empty string."""
+        if self._has_header:
+            self.header = self.lines[0]
+            self.lines = self.lines[1:]
+        else:
+            self.header = ""
+
+    def _scrub_lines(self):
+        """Removes multiple whitespaces in the middle of a line."""
+        clean_lines = []
+        for line in self.lines:
+            clean_lines.append(" ".join(line.split()))
+        self.lines = clean_lines
+
+    def _set_type(self):
+        """Sets the chapter type, based on SPECIAL_LIST."""
+        if self.lines[0] in SPECIAL_LIST:
+            self.type = self.lines.pop(0)
+            self.number = False
+        else:
+            self.type = "chapter"
+            self.number = True
 
     # This should be in the Report
     # def _get_counts(self):
@@ -136,8 +169,6 @@ class Chapter:
 # - count words used for each grade's word lists.
 # - no indent for epub, has para spacing.
 # - indent for print, no para spacing.
-def parse_chapters():
-    pass
 
 
 # order chapters so that prologues, epiloges, etc, are in place.
@@ -162,47 +193,64 @@ def order_chapters(chapters, special_list):
     return new_chapters, specials
 
 
-# create header pages
-# - title
-# - copyright, etc
-def create_header_pages():
-    pass
-
-
-# write each chapter into the book.
-def collate_book(chapters=[], specials = [], chapter_divider = ""):
-    """Collate a list of chapters, separated by a divider, into a string."""
-    book_data = ""
-    for chapter in chapters:
-        if book_data:
-            book_data += "\n{}\n".format(chapter_divider)
-        # This no longer works, due to the header and specials.
-        book_data += str(chapter.__str__())
-    return book_data
-
-
 class BookBuilder:
-    def __init__(self, config=DEFAULT_CONFIG, chapters=[], specials = {}):
-        self.config = config
+    def __init__(self, config={}, chapters=[], specials={}):
+        self.config = DEFAULT_CONFIG | config
         self.chapters = chapters
         self.specials = specials
+        self.text = ""
+
+    def write_chapter(self, chapter):
+        """Returns a string of the chapter, with additions."""
+        text = ""
+        page_break = self.config["page_break"]
+
+        if chapter.number:
+            text += "Chapter {}\n\n".format(chapter.number)
+        if chapter.header:
+            text += "{}\n\n".format(chapter.header)
+        for line in chapter.lines:
+            text += line + "\n\n"
+
+        text += page_break
+        return text
 
     def build(self):
-        """ Returns the Book object. """
+        """Returns the Book object."""
         book = Book()
         book.author = self.config["author"]
-        book.chapters = self.chapters
+        chapter_number = 0
+        for chapter in self.chapters:
+            if chapter.type == "chapter":
+                chapter_number += 1
+                chapter.number = chapter_number
+            book.text += self.write_chapter(chapter)
+        book.text += "\n\n"
         return book
 
 
 class Book:
-    def __init__(self):
-        pass
+    def __init__(self, text=""):
+        self.text = text
+
+
+def book_filename(config, file_type="txt"):
+    """Munges the title into something that is easy to deal with."""
+    title = config["title"].lower()
+    title = re.sub(r"[\W]", " ", title)
+    title_words = title.split()
+    title = "_".join(title_words)
+    title += "." + file_type
+    return title
 
 
 # Write book files; print, text, pdf(?)
-def write_book(book):
-    pass
+def write_book(book, config):
+    book_dir = config["book_dir"]
+    book_file = book_filename(config, "txt")
+    book_name = os.path.join(book_dir, book_file)
+    with open(book_name, "w") as b:
+        b.write(book.text)
 
 
 # collate all reports.
@@ -215,11 +263,31 @@ def write_reports():
     pass
 
 
+def parse_chapters(_dir, has_header=False):
+    """Takes a directory of chapter files, and returns a list of
+    Chapter objects."""
+    chapters = []
+    data = {}
+    if not os.path.isdir(_dir):
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), _dir)
+    files = list_of_files(_dir)
+    if not files:
+        print("No chapter files found in {}.".format(_dir))
+        sys.exit(1)
+    for file in files:
+        filepath = os.path.join(_dir, file)
+        data["lines"] = lines_from_file(filepath)
+        data["has_header"] = has_header
+        chapters.append(Chapter(data))
+    return chapters
+
+
 if __name__ == "__main__":
     config = read_config()
     setup_dirs(config)
-    parse_chapters()
-    collate_book()
-    write_book()
+    chapters = parse_chapters(config["chapter_dir"], config["has_header"])
+    book = BookBuilder(config, chapters).build()
+    # collate_book()
+    write_book(book, config)
     collate_reports()
     write_reports()
