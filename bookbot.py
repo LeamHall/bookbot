@@ -9,6 +9,7 @@
 
 ## Notes
 
+import argparse
 from configparser import ConfigParser
 import errno
 import os
@@ -23,6 +24,7 @@ DEFAULT_CONFIG = {
     "author": "",
     "book_dir": "book",
     "chapter_dir": "chapters",
+    "has_header": True,
     "page_break": "\n__page_break__\n",
     "reports_dir": "reports",
     "title": "",
@@ -37,6 +39,41 @@ SPECIAL_LIST = [
     "author",
     "more",
 ]
+
+
+def parse_args():
+    """Returns the parsed arguments."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-f",
+        "--file",
+        help="Config file in TOML format.",
+        default="book_config.toml",
+    )
+    parser.add_argument("-a", "--author", help="Author name")
+    parser.add_argument(
+        "-b", "--book_dir", help="Directory for book results.", default="book"
+    )
+    parser.add_argument(
+        "-c",
+        "--chapter_dir",
+        help="Directory for chapters.",
+        default="chapters",
+    )
+    parser.add_argument(
+        "--has_header", help="Chapters have headers?", default=True
+    )
+    parser.add_argument(
+        "-p",
+        "--page_break",
+        help="String used to identify page_break locations",
+        default="\n__page_break__\n",
+    )
+    parser.add_argument(
+        "-r", "--reports_dir", help="Directory for reports.", default="reports"
+    )
+    parser.add_argument("-t", "--title", help="Book title")
+    return parser.parse_args()
 
 
 def list_of_files(target_dir):
@@ -71,21 +108,14 @@ def chapter_type(filename):
     return "chapter"
 
 
-def read_config(defaults=DEFAULT_CONFIG, config_file=CONFIG_FILE):
+def read_config(args={}, config=DEFAULT_CONFIG):
     """
-    Takes the default configuration dict and a config file,
+    Takes the default configuration dict and parsed arguments,
     and returns a dict of configuration.
     """
     # Need to test for missing config file.
     # Set the blanks to something odd?
-    config = defaults
-    parser = ConfigParser()
-    try:
-        parser.read(config_file)
-        config.update(dict(parser["Book"]))
-    except KeyError:
-        pass
-
+    config.update(args)
     return config
 
 
@@ -283,11 +313,10 @@ def parse_chapters(_dir, has_header=False):
 
 
 if __name__ == "__main__":
-    config = read_config()
+    args = parse_args()
     setup_dirs(config)
     chapters = parse_chapters(config["chapter_dir"], config["has_header"])
     book = BookBuilder(config, chapters).build()
-    # collate_book()
     write_book(book, config)
     collate_reports()
     write_reports()
