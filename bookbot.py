@@ -41,7 +41,7 @@ SPECIAL_LIST = [
 ]
 
 
-def parse_args():
+def parse_args(args=sys.argv):
     """Returns the parsed arguments."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -73,7 +73,7 @@ def parse_args():
         "-r", "--reports_dir", help="Directory for reports.", default="reports"
     )
     parser.add_argument("-t", "--title", help="Book title")
-    return parser.parse_args()
+    return parser.parse_args(args)
 
 
 def list_of_files(target_dir):

@@ -65,11 +65,7 @@ class TestConfig(unittest.TestCase):
             self.assertTrue(os.path.exists(test_dir))
 
     def test_parse_args(self):
-        """
-        Note that if unittest is called with a -f option, this test will
-        fail, as it picks up whatever -f file is given to unittest.
-        """
-        args = bb.parse_args()
+        args = bb.parse_args(args=[])  # So that test does not get parent.
         self.assertEqual(args.file, "book_config.toml")
         self.assertEqual(args.author, None)
         self.assertEqual(args.book_dir, "book")
