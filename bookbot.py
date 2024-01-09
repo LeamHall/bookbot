@@ -16,7 +16,7 @@ import os
 from pathlib import Path
 import re
 import sys
-
+import tomllib
 
 CONFIG_FILE = "book_config.ini"
 
@@ -41,7 +41,7 @@ SPECIAL_LIST = [
 ]
 
 
-def parse_args(args=sys.argv):
+def parse_args(args=[]):
     """Returns the parsed arguments."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -73,7 +73,7 @@ def parse_args(args=sys.argv):
         "-r", "--reports_dir", help="Directory for reports.", default="reports"
     )
     parser.add_argument("-t", "--title", help="Book title")
-    return parser.parse_args(args)
+    return vars(parser.parse_args(args))
 
 
 def list_of_files(target_dir):
@@ -108,14 +108,17 @@ def chapter_type(filename):
     return "chapter"
 
 
-def read_config(args={}, config=DEFAULT_CONFIG):
+def read_config(_args={}, config=DEFAULT_CONFIG):
     """
     Takes the default configuration dict and parsed arguments,
     and returns a dict of configuration.
     """
-    # Need to test for missing config file.
-    # Set the blanks to something odd?
-    config.update(args)
+    try:
+        with open(_args['file'], "rb") as f:
+            data = tomllib.load(f)
+        config.update(data)
+    except (KeyError, FileNotFoundError):
+        pass 
     return config
 
 
@@ -313,7 +316,8 @@ def parse_chapters(_dir, has_header=False):
 
 
 if __name__ == "__main__":
-    args = parse_args()
+    _args = parse_args(args=sys.argv)
+    config = read_config(_args)
     setup_dirs(config)
     chapters = parse_chapters(config["chapter_dir"], config["has_header"])
     book = BookBuilder(config, chapters).build()
