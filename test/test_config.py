@@ -31,9 +31,9 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(config["chapter_dir"], "chapters")
         self.assertEqual(config["title"], "")
         self.assertNotIn("stuff", config.keys())
-   
+
     def test_read_config(self):
-        _args = bb.parse_args(args=['-f', self.config_file])
+        _args = bb.parse_args(args=["-f", self.config_file])
         config = bb.read_config(_args)
         self.assertEqual(config["author"], "Leam Hall")
         self.assertEqual(config["book_dir"], "book")
@@ -46,7 +46,18 @@ class TestConfig(unittest.TestCase):
             bb.setup_dirs()
 
     def test_setup_dirs_no_root_dir(self):
-        _args = bb.parse_args(args=['-f', self.config_file, '-b', "book", '-c', "chapters", '-r', "reports"])
+        _args = bb.parse_args(
+            args=[
+                "-f",
+                self.config_file,
+                "-b",
+                "book",
+                "-c",
+                "chapters",
+                "-r",
+                "reports",
+            ]
+        )
         test_config = bb.read_config(_args)
         bb.setup_dirs(conf=test_config)
         dirs = ["book", "reports", "chapters"]
@@ -56,7 +67,18 @@ class TestConfig(unittest.TestCase):
             os.rmdir(d)
 
     def test_setup_dirs_pass(self):
-        _args = bb.parse_args(args=['-f', self.config_file, '-b', "book", '-c', "chapters", '-r', "reports"])
+        _args = bb.parse_args(
+            args=[
+                "-f",
+                self.config_file,
+                "-b",
+                "book",
+                "-c",
+                "chapters",
+                "-r",
+                "reports",
+            ]
+        )
         test_config = bb.read_config(_args)
         bb.setup_dirs(conf=test_config, root_dir=self.test_dir.name)
         dirs = ["book", "reports", "chapters"]
@@ -65,8 +87,18 @@ class TestConfig(unittest.TestCase):
             self.assertTrue(os.path.exists(test_dir))
 
     def test_parse_args(self):
-        _args = bb.parse_args(args=['-f', self.config_file, '-b', "book", '-c', "chapters", '-r', "reports"])
-        test_config = bb.read_config(_args)
+        _args = bb.parse_args(
+            args=[
+                "-f",
+                self.config_file,
+                "-b",
+                "book",
+                "-c",
+                "chapters",
+                "-r",
+                "reports",
+            ]
+        )
         self.assertEqual(_args["file"], self.config_file)
         self.assertEqual(_args["author"], None)
         self.assertEqual(_args["book_dir"], "book")

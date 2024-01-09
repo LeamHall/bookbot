@@ -10,7 +10,6 @@
 ## Notes
 
 import argparse
-from configparser import ConfigParser
 import errno
 import os
 from pathlib import Path
@@ -114,11 +113,11 @@ def read_config(_args={}, config=DEFAULT_CONFIG):
     and returns a dict of configuration.
     """
     try:
-        with open(_args['file'], "rb") as f:
+        with open(_args["file"], "rb") as f:
             data = tomllib.load(f)
         config.update(data)
     except (KeyError, FileNotFoundError):
-        pass 
+        pass
     return config
 
 
