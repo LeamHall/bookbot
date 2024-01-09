@@ -17,8 +17,6 @@ import re
 import sys
 import tomllib
 
-CONFIG_FILE = "book_config.ini"
-
 DEFAULT_CONFIG = {
     "author": "",
     "book_dir": "book",
@@ -83,7 +81,8 @@ def list_of_files(target_dir):
     for root, dirs, files in os.walk(target_dir):
         for file in files:
             filenames.append(file)
-    return filenames
+
+    return sorted(filenames)
 
 
 def lines_from_file(filename):
@@ -315,7 +314,7 @@ def parse_chapters(_dir, has_header=False):
 
 
 if __name__ == "__main__":
-    _args = parse_args(args=sys.argv)
+    _args = parse_args(args=sys.argv[1:])
     config = read_config(_args)
     setup_dirs(config)
     chapters = parse_chapters(config["chapter_dir"], config["has_header"])
