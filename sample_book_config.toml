@@ -1,0 +1,10 @@
+# Strings must be in quotes, while true and false do not.
+report          = true
+title           = "Engineer"
+chapter_dir     = "chapters"
+book_dir        = "book"
+reports_dir     = "reports"
+author          = "Leam Hall"
+has_header      = true
+section_break   = "\n__section_break__\n"
+

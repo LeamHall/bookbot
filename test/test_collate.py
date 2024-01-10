@@ -39,7 +39,7 @@ class TestCollate(unittest.TestCase):
 
     # def test_collate_with_data_and_sep(self):
     #    expected = "Line one.\n\nLine two.\n##\nLino unu.\n\nLino du."
-    #    result = bb.collate_book(self.chapters, page_break = "##")
+    #    result = bb.collate_book(self.chapters, section_break = "##")
     #    self.assertEqual(result, expected)
 
     def test_collate_file_list(self):

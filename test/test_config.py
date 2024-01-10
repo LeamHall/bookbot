@@ -104,6 +104,6 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(_args["book_dir"], "book")
         self.assertEqual(_args["chapter_dir"], "chapters")
         self.assertEqual(_args["has_header"], True)
-        self.assertEqual(_args["page_break"], "\n__page_break__\n")
+        self.assertEqual(_args["section_break"], "\n__section_break__\n")
         self.assertEqual(_args["reports_dir"], "reports")
         self.assertEqual(_args["title"], None)

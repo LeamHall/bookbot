@@ -22,7 +22,7 @@ DEFAULT_CONFIG = {
     "book_dir": "book",
     "chapter_dir": "chapters",
     "has_header": True,
-    "page_break": "\n__page_break__\n",
+    "section_break": "\n__section_break__\n",
     "reports_dir": "reports",
     "title": "",
 }
@@ -62,9 +62,9 @@ def parse_args(args=[]):
     )
     parser.add_argument(
         "-p",
-        "--page_break",
-        help="String used to identify page_break locations",
-        default="\n__page_break__\n",
+        "--section_break",
+        help="String used to identify section_break locations",
+        default="\n__section_break__\n",
     )
     parser.add_argument(
         "-r", "--reports_dir", help="Directory for reports.", default="reports"
@@ -234,7 +234,7 @@ class BookBuilder:
     def write_chapter(self, chapter):
         """Returns a string of the chapter, with additions."""
         text = ""
-        page_break = self.config["page_break"]
+        section_break = self.config["section_break"]
 
         if chapter.number:
             text += "Chapter {}\n\n".format(chapter.number)
@@ -243,7 +243,7 @@ class BookBuilder:
         for line in chapter.lines:
             text += line + "\n\n"
 
-        text += page_break
+        text += section_break
         return text
 
     def build(self):
