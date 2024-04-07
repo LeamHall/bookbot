@@ -40,7 +40,7 @@ Process
 
   3.      To make the Chapter headers bold (chapters and sections are the same)
     3.1.  Edit -> Find and Replace
-    3.2.  Find:     Chapter [:digit:]{3}
+    3.2.  Find:     Chapter [:digit:]{1,3}
     3.3.  Replace:  &
       3.3.1.  Ensure the selection focus is here before proceeding.
     3.4.  Format -> Font -> Style -> Bold
@@ -70,5 +70,9 @@ Process
     5.4.  Insert -> Page Number 
     5.5.  Select the number "1", and then click the "Align Center" formater.
     5.6.  For font, select Palantino, and "10".
+
+
+  6.      Go through the document and make sure there are no blank pages.
+    6.1.  Remove any extra lines at the top of each page. 
 
 
