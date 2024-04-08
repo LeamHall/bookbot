@@ -24,7 +24,7 @@ Process
     1.3. Upper menu: Format -> Paragraph -> Text Flow
           "Breaks"    -> Insert
           "Type"      -> Page
-          "Position"  -> Before
+          "Position"  -> After
           "Ok"
     1.4.  Edit -> Find and Replace
           Find:       __section_break__

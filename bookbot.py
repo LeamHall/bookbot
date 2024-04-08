@@ -155,10 +155,12 @@ class Chapter:
             self.header = ""
 
     def _scrub_lines(self):
-        """Removes multiple whitespaces in the middle of a line."""
+        """Removes multiple whitespaces and empty lines."""
         clean_lines = []
         for line in self.lines:
-            clean_lines.append(" ".join(line.split()))
+            line = line.strip()
+            if line:
+                clean_lines.append(" ".join(line.split()))
         self.lines = clean_lines
 
     def _set_type(self):
@@ -233,18 +235,15 @@ class BookBuilder:
 
     def write_chapter(self, chapter):
         """Returns a string of the chapter, with additions."""
-        text = ""
         section_break = self.config["section_break"]
-
+        text = section_break
         if chapter.number:
             text += "Chapter {}\n\n".format(chapter.number)
         if chapter.header:
             text += "{}\n\n".format(chapter.header)
         for line in chapter.lines:
-            text += line + "\n\n"
-
-        text += section_break
-        return text
+            text += "\n\n" + line
+        return text.strip()
 
     def build(self):
         """Returns the Book object."""
