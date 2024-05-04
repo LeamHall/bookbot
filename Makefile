@@ -14,6 +14,6 @@ clean:
 
 all: clean test
 	python -m black -l 79 .
-	-flake8 --ignore E251,E266,W391
+	-flake8 --ignore E251,E266,W391,W503
 	semgrep --config "p/default"
 

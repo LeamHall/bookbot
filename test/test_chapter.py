@@ -99,10 +99,10 @@ class TestChapter(unittest.TestCase):
         )
 
     def test_chapter_no_header(self):
-        chapter_data = {"lines": ["one", "two", "three"], "has_header": False}
+        chapter_data = {"lines": ["one", "two", "three."], "has_header": False}
         chapter_1 = bb.Chapter(chapter_data)
         self.assertFalse(chapter_1.header)
-        self.assertEqual(chapter_1.__str__(), "one\n\ntwo\n\nthree")
+        self.assertEqual(chapter_1.__str__(), "one\n\ntwo\n\nthree.")
 
     def test_scrub_line(self):
         chapter_data = {
@@ -115,7 +115,7 @@ class TestChapter(unittest.TestCase):
 
     def test_set_type_no_header(self):
         chapter_data = {
-            "lines": ["prologue", "one", "two", "three"],
+            "lines": ["prologue", "one", "two", "three."],
             "has_header": False,
         }
         c = bb.Chapter(chapter_data)
@@ -123,7 +123,7 @@ class TestChapter(unittest.TestCase):
 
     def test_set_type_with_header(self):
         chapter_data = {
-            "lines": ["some date", "prologue", "one", "two", "three"],
+            "lines": ["some date", "prologue", "one", "two", "three."],
             "has_header": True,
         }
         c = bb.Chapter(chapter_data)
@@ -131,13 +131,22 @@ class TestChapter(unittest.TestCase):
 
     def test_set_type_chapter_with_header(self):
         chapter_data = {
-            "lines": ["some date", "one", "two", "three"],
+            "lines": ["some date", "one", "two", "three."],
             "has_header": True,
         }
         c = bb.Chapter(chapter_data)
         self.assertEqual(c.type, "chapter")
 
     def test_set_type_chapter_no_header(self):
-        chapter_data = {"lines": ["one", "two", "three"], "has_header": False}
+        chapter_data = {"lines": ["one", "two", "three."], "has_header": False}
         c = bb.Chapter(chapter_data)
         self.assertEqual(c.type, "chapter")
+
+    def test_chapter_has_report(self):
+        chapter_data = {
+            "lines": ["one.", "two?", "three!"],
+            "has_header": False,
+        }
+        c = bb.Chapter(chapter_data)
+        self.assertTrue(c.report)
+        self.assertEqual(type(c.report_data), dict)
