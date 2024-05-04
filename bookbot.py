@@ -90,7 +90,7 @@ def lines_from_file(filename):
     Returns a list of non-blank lines in the file.
     """
     file_data = []
-    with open(filename, "r") as in_f:
+    with open(filename, "r", encoding="utf-8-sig") as in_f:
         for line in in_f.readlines():
             line = line.strip()
             if line:
@@ -279,7 +279,7 @@ def write_book(book, config):
     book_dir = config["book_dir"]
     book_file = book_filename(config, "txt")
     book_name = os.path.join(book_dir, book_file)
-    with open(book_name, "w") as b:
+    with open(book_name, "w", encoding="utf-8") as b:
         b.write(book.text)
 
 
