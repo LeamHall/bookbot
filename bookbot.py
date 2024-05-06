@@ -135,61 +135,59 @@ def setup_dirs(conf=None, root_dir=None):
 
 
 class Report:
+
     def __init__(self, data, filename):
+        self.punctuation = [".", "?", "!"]
+        self.vowels = ["a", "e", "i", "o", "u"]
+        self.doubles = ["ee", "oi", "oo", "ou"]
+        self.quotes = ['"', "'"]
         self.filename = filename
         self.lines = list()
         for line in data:
             self.lines.append(line.lower())
-        self.count_sentences()
-        self.count_words()
-        self.count_syallables()
-        self.grade_report()
+        self._count_sentences()
+        self._count_words()
+        self._count_syallables()
+        self._grade_report()
 
-    def count_sentences(self):
+    def _count_sentences(self):
         """Counts the number of sentence ending marks."""
         self.sentence_count = 0
         for line in self.lines:
-            self.sentence_count += line.count(".")
-            self.sentence_count += line.count("?")
-            self.sentence_count += line.count("!")
+            for p in self.punctuation:
+                self.sentence_count += line.count(p)
 
-    def count_words(self):
+    def _count_words(self):
         """Counts the number of words, ignoring punctuation."""
         self.word_count = 0
         for line in self.lines:
             self.word_count += len(line.split())
 
-    def count_syallables(self):
+    def _count_syallables(self):
         """Simplistic syllable counter. Does not handle unicode."""
         self.syllable_count = 0
         for line in self.lines:
-            self.syllable_count += line.count("a")
-            self.syllable_count += line.count("e")
-            self.syllable_count += line.count("i")
-            self.syllable_count += line.count("o")
-            self.syllable_count += line.count("u")
-            self.syllable_count -= line.count("ee")
-            self.syllable_count -= line.count("oi")
-            self.syllable_count -= line.count("oo")
-            self.syllable_count -= line.count("ou")
-            scrubbed_line = line.replace(".", " ")
-            scrubbed_line = scrubbed_line.replace("!", " ")
-            scrubbed_line = scrubbed_line.replace("?", " ")
-            scrubbed_line = scrubbed_line.replace('"', " ")
+            for v in self.vowels:
+                self.syllable_count += line.count(v)
+            for d in self.doubles:
+                self.syllable_count -= line.count(d)
+            scrubbed_line = line
+            for p in self.punctuation:
+                scrubbed_line = scrubbed_line.replace(p, " ")
+            for q in self.quotes:
+                scrubbed_line = scrubbed_line.replace(q, " ")
             words = scrubbed_line.split()
             for word in words:
                 for phrase in ["e", "ey"]:
                     if word.endswith(phrase):
                         self.syllable_count -= 1
-                for phrase in [
-                    "y",
-                ]:
+                for phrase in ["y"]:
                     if word.endswith(phrase):
                         self.syllable_count += 1
         if self.syllable_count < 1:
             self.syllable_count = 1
 
-    def grade_report(self):
+    def _grade_report(self):
         """Calculates grade level per:
         https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests
         """
@@ -253,40 +251,23 @@ class Chapter:
             self.type = "chapter"
             self.number = True
 
-    # This should be in the Report
-    # def _get_counts(self):
-    #    """Sets the word and sentence counts."""
-    #    self.sentence_count = 0
-    #    self.word_count = 0
-    #    for line in self._lines:
-    #        self.word_count += len(line.split())
-    #        self.sentence_count += line.count(".")
-    #        self.sentence_count += line.count("!")
-    #        self.sentence_count += line.count("?")
-    #        self.average_sentence_length = round(
-    #            self.word_count / self.sentence_count
-    #        )
+    ## Working with individual Chapters
+    # pull each chapter into its own object
+    # - [Done] strip beginning and ending whitespace.
+    # - [Done] break sentences into list items.
+    # -- [Done] include closing quotes
+    # - [Done] remove two or more spaces next to each other.
+    # - [Done] get word and sentence counts.
+    # - [Done] get average sentence lengths.
+    # - [done] deal with chapter headers, like [this]
+    # - [done] format to be easier to bold chapter number and datetimes.
+    # - format extended spacers
+    # - do grade analysis.
+    # - count words used for each grade's word lists.
+    # - no indent for epub, has para spacing.
+    # - indent for print, no para spacing.
 
 
-## Working with individual Chapters
-# pull each chapter into its own object
-# - [Done] strip beginning and ending whitespace.
-# - [Done] break sentences into list items.
-# -- [Done] include closing quotes
-# - [Done] remove two or more spaces next to each other.
-# - [Done] get word and sentence counts.
-# - [Done] get average sentence lengths.
-# - [done] deal with chapter headers, like [this]
-# - [done] format to be easier to bold the chapter number and datetime stamp.
-# - format extended spacers
-# - do grade analysis.
-# - count words used for each grade's word lists.
-# - no indent for epub, has para spacing.
-# - indent for print, no para spacing.
-
-
-# order chapters so that prologues, epiloges, etc, are in place.
-# - needs a book object
 def order_chapters(chapters, special_list):
     """
     Removes special chapters from chapter list, and returns the reduced
