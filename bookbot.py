@@ -298,14 +298,16 @@ class BookBuilder:
     def write_chapter(self, chapter):
         """Returns a string of the chapter, with additions."""
         section_break = self.config["section_break"]
-        text = section_break
+        text = ""
+        if chapter.number > 1:
+            text += section_break
         if chapter.number:
             text += "Chapter {}\n\n".format(chapter.number)
         if chapter.header:
             text += "{}\n\n".format(chapter.header)
         for line in chapter.lines:
             text += "\n\n" + line
-        return text.strip()
+        return text.rstrip()
 
     def build(self):
         """Returns the Book object."""
