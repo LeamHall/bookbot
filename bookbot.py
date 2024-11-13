@@ -27,16 +27,16 @@ DEFAULT_CONFIG = {
     "title": "",
 }
 
-SPECIAL_LIST = [
-    "title",
-    "isbn",
-    "prologue",
-    "epilogue",
-    "afterward",
-    "author",
-    "more",
-]
 
+special_chapters = {
+    "title":    "",
+    "isbn":     "",
+    "prologue": "",
+    "epilogue": "",
+    "afterward": "",
+    "author_bio": "",
+    "more":     "",
+}
 
 def parse_args(args=[]):
     """Returns the parsed arguments."""
@@ -73,15 +73,20 @@ def parse_args(args=[]):
     return vars(parser.parse_args(args))
 
 
+
 def list_of_files(target_dir):
     """
     Takes a target directory and returns the list of filenames.
     """
+    if not os.path.isdir(target_dir):
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), target_dir)
     filenames = []
     for root, dirs, files in os.walk(target_dir):
         for file in files:
-            filenames.append(file)
-
+            if file.endswith(".txt"):
+                filenames.append(os.path.join(target_dir, file))
+    if not filenames:
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), target_dir)
     return sorted(filenames)
 
 
@@ -101,7 +106,7 @@ def lines_from_file(filename):
 def chapter_type(filename):
     """Returns the type of the chapter, based on filename."""
     p = Path(filename)
-    if p.stem in SPECIAL_LIST:
+    if p.stem in special_chapters:
         return p.stem
     return "chapter"
 
@@ -215,11 +220,12 @@ class Chapter:
         self.lines = data.get("lines", [])
         self._has_header = data.get("has_header", True)
         self.filename = data.get("filename", "")
+        self.type = data.get("type", "chapter")
+        self.number = data.get("number", 0)
         self._set_header()
         self._scrub_lines()
-        self._set_type()
-        self.report = Report(data=self.lines, filename=self.filename)
-        self.report_data = self.report.report_data()
+        #self.report = Report(data=self.lines, filename=self.filename)
+        #self.report_data = self.report.report_data()
 
     def __str__(self):
         lines = "\n\n".join(self.lines)
@@ -242,14 +248,14 @@ class Chapter:
                 clean_lines.append(" ".join(line.split()))
         self.lines = clean_lines
 
-    def _set_type(self):
-        """Sets the chapter type, based on SPECIAL_LIST."""
-        if self.lines[0] in SPECIAL_LIST:
-            self.type = self.lines.pop(0)
-            self.number = False
-        else:
-            self.type = "chapter"
-            self.number = True
+    #def _set_type(self):
+    #    """Sets the chapter type, based on SPECIAL_LIST."""
+    #    if self.lines[0] in SPECIAL_LIST:
+    #        self.type = self.lines.pop(0)
+    #        self.number = False
+    #    else:
+    #        self.type = "chapter"
+    #        self.number = True
 
     ## Working with individual Chapters
     # pull each chapter into its own object
@@ -268,39 +274,37 @@ class Chapter:
     # - indent for print, no para spacing.
 
 
-def order_chapters(chapters, special_list):
-    """
-    Removes special chapters from chapter list, and returns the reduced
-    list of chapters, and the specificaly sorted order of specials.
-    """
-    new_chapters = list()
-    temp_specials = list()
-    specials = list()
-    for chapter in chapters:
-        if chapter in special_list:
-            temp_specials.append(chapter)
-        else:
-            new_chapters.append(chapter)
-    for special in special_list:
-        if special in temp_specials:
-            specials.append(special)
-
-    return new_chapters, specials
+#def order_chapters(chapters, special_list):
+#    """
+#    Removes special chapters from chapter list, and returns the reduced
+#    list of chapters, and the specificaly sorted order of specials.
+#    """
+#    new_chapters = list()
+#    temp_specials = list()
+#    specials = list()
+#    for chapter in chapters:
+#        if chapter in special_list:
+#            temp_specials.append(chapter)
+#        else:
+#            new_chapters.append(chapter)
+#    for special in special_list:
+#        if special in temp_specials:
+#            specials.append(special)
+#
+#    return new_chapters, specials
 
 
 class BookBuilder:
-    def __init__(self, config={}, chapters=[], specials={}):
+    def __init__(self, config={}, chapters=[], special_chapters=special_chapters):
         self.config = DEFAULT_CONFIG | config
         self.chapters = chapters
-        self.specials = specials
+        self.special_chapters = special_chapters
         self.text = ""
 
     def write_chapter(self, chapter):
         """Returns a string of the chapter, with additions."""
         section_break = self.config["section_break"]
-        text = ""
-        if chapter.number > 1:
-            text += section_break
+        text = section_break
         if chapter.number:
             text += "Chapter {}\n\n".format(chapter.number)
         if chapter.header:
@@ -383,33 +387,38 @@ def write_reports(reports_dir, report_string):
         f.write(report_string)
 
 
-def parse_chapters(_dir, has_header=False):
-    """Takes a directory of chapter files, and returns a list of
-    Chapter objects."""
+def parse_chapters(files, specials, has_header=False):
+    """Takes a directory of chapter files, and returns list of
+    Chapter objects and a dict of Special Chapter objects."""
     chapters = []
-    data = {}
-    if not os.path.isdir(_dir):
-        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), _dir)
-    files = list_of_files(_dir)
-    if not files:
-        print("No chapter files found in {}.".format(_dir))
-        sys.exit(1)
+    chapter_count = 0
+    special_chapters = specials
     for file in files:
-        filepath = os.path.join(_dir, file)
-        data["lines"] = lines_from_file(filepath)
+        data = {}
+        data["lines"] = lines_from_file(file)
         data["has_header"] = has_header
-        data["filename"] = file
-        chapters.append(Chapter(data))
-    return chapters
+        data["filename"] = os.path.basename(file)
+        data["type"] = chapter_type(file) 
+        if data["type"] in special_chapters:
+            special_name = data["type"]
+            special_chapters[special_name] = Chapter(data)
+        else:
+            chapter_count += 1
+            data["number"] = chapter_count
+            chapters.append(Chapter(data))
+    return chapters, special_chapters
 
-
+ 
 if __name__ == "__main__":
     _args = parse_args(args=sys.argv[1:])
     config = read_config(_args)
     setup_dirs(config)
-    chapters = parse_chapters(config["chapter_dir"], config["has_header"])
+    chapters, specials = parse_chapters(
+        list_of_files(config["chapter_dir"]),
+        special_chapters,
+        config["has_header"])
     book = BookBuilder(config, chapters).build()
     write_book(book, config)
-    collated_reports = collate_reports(book)
-    report = write_report_string(collated_reports)
-    write_reports(_args["reports_dir"], report)
+    #collated_reports = collate_reports(book)
+    #report = write_report_string(collated_reports)
+    #write_reports(_args["reports_dir"], report)
