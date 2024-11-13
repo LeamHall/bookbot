@@ -11,7 +11,7 @@ import unittest
 
 import bookbot as bb
 
-        
+
 class TestChapter(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.TemporaryDirectory()
@@ -35,7 +35,7 @@ class TestChapter(unittest.TestCase):
     def tearDown(self):
         self.test_dir.cleanup()
 
-    #def test_chapter_type_isbn(self):
+    # def test_chapter_type_isbn(self):
     #    isbn_file = os.path.join(self.test_dir.name, "isbn.txt")
     #    with open(isbn_file, "w") as s1:
     #        s1.write("\nisbn\n")
@@ -43,11 +43,10 @@ class TestChapter(unittest.TestCase):
     #    result = bb.chapter_type(isbn_file)
     #    self.assertEqual(result, expected)
 
-    #def test_chapter_type_chapter(self):
+    # def test_chapter_type_chapter(self):
     #    expected = "chapter"
     #    result = bb.chapter_type(self.chapter_one_file)
     #    self.assertEqual(result, expected)
-
 
     def test_read_chapter(self):
         chapter_lines = bb.lines_from_file(self.chapter_one_file)
@@ -73,7 +72,7 @@ class TestChapter(unittest.TestCase):
     #    self.assertEqual(chapter_1.word_count, 58)
     #    self.assertEqual(chapter_1.average_sentence_length, 12)
 
-    #def test_order_chapters(self):
+    # def test_order_chapters(self):
     #    orig_chapters = [
     #        "author",
     #        "this",

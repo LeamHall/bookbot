@@ -28,7 +28,7 @@ class TestCollate(unittest.TestCase):
                 in_f.write("Something in {}.\n\n".format(f))
 
         self.test_dir_no_txt_files = tempfile.TemporaryDirectory()
-        
+
     def tearDown(self):
         self.test_dir.cleanup()
         self.test_dir_no_txt_files.cleanup()
@@ -67,4 +67,3 @@ class TestCollate(unittest.TestCase):
     def test_list_of_files_no_files(self):
         with self.assertRaises(FileNotFoundError):
             bb.list_of_files(self.test_dir_no_txt_files.name)
-

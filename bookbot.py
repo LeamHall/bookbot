@@ -29,14 +29,15 @@ DEFAULT_CONFIG = {
 
 
 special_chapters = {
-    "title":    "",
-    "isbn":     "",
+    "title": "",
+    "isbn": "",
     "prologue": "",
     "epilogue": "",
     "afterward": "",
     "author_bio": "",
-    "more":     "",
+    "more": "",
 }
+
 
 def parse_args(args=[]):
     """Returns the parsed arguments."""
@@ -73,20 +74,23 @@ def parse_args(args=[]):
     return vars(parser.parse_args(args))
 
 
-
 def list_of_files(target_dir):
     """
     Takes a target directory and returns the list of filenames.
     """
     if not os.path.isdir(target_dir):
-        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), target_dir)
+        raise FileNotFoundError(
+            errno.ENOENT, os.strerror(errno.ENOENT), target_dir
+        )
     filenames = []
     for root, dirs, files in os.walk(target_dir):
         for file in files:
             if file.endswith(".txt"):
                 filenames.append(os.path.join(target_dir, file))
     if not filenames:
-        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), target_dir)
+        raise FileNotFoundError(
+            errno.ENOENT, os.strerror(errno.ENOENT), target_dir
+        )
     return sorted(filenames)
 
 
@@ -161,6 +165,10 @@ class Report:
         for line in self.lines:
             for p in self.punctuation:
                 self.sentence_count += line.count(p)
+        # Yeah, this is hokey. But resolves a lack of punctuation causing
+        # a ZeroDivisionError
+        if self.sentence_count < len(self.lines):
+            self.sentence_count = len(self.lines)
 
     def _count_words(self):
         """Counts the number of words, ignoring punctuation."""
@@ -248,7 +256,7 @@ class Chapter:
                 clean_lines.append(" ".join(line.split()))
         self.lines = clean_lines
 
-    #def _set_type(self):
+    # def _set_type(self):
     #    """Sets the chapter type, based on SPECIAL_LIST."""
     #    if self.lines[0] in SPECIAL_LIST:
     #        self.type = self.lines.pop(0)
@@ -274,7 +282,7 @@ class Chapter:
     # - indent for print, no para spacing.
 
 
-#def order_chapters(chapters, special_list):
+# def order_chapters(chapters, special_list):
 #    """
 #    Removes special chapters from chapter list, and returns the reduced
 #    list of chapters, and the specificaly sorted order of specials.
@@ -295,7 +303,9 @@ class Chapter:
 
 
 class BookBuilder:
-    def __init__(self, config={}, chapters=[], special_chapters=special_chapters):
+    def __init__(
+        self, config={}, chapters=[], special_chapters=special_chapters
+    ):
         self.config = DEFAULT_CONFIG | config
         self.chapters = chapters
         self.special_chapters = special_chapters
@@ -388,7 +398,7 @@ def write_reports(reports_dir, report_string):
 
 
 def parse_chapters(files, specials, has_header=False):
-    """Takes a directory of chapter files, and returns list of
+    """Takes a list of files and returns list of
     Chapter objects and a dict of Special Chapter objects."""
     chapters = []
     chapter_count = 0
@@ -398,7 +408,7 @@ def parse_chapters(files, specials, has_header=False):
         data["lines"] = lines_from_file(file)
         data["has_header"] = has_header
         data["filename"] = os.path.basename(file)
-        data["type"] = chapter_type(file) 
+        data["type"] = chapter_type(file)
         if data["type"] in special_chapters:
             special_name = data["type"]
             special_chapters[special_name] = Chapter(data)
@@ -408,7 +418,7 @@ def parse_chapters(files, specials, has_header=False):
             chapters.append(Chapter(data))
     return chapters, special_chapters
 
- 
+
 if __name__ == "__main__":
     _args = parse_args(args=sys.argv[1:])
     config = read_config(_args)
@@ -416,9 +426,11 @@ if __name__ == "__main__":
     chapters, specials = parse_chapters(
         list_of_files(config["chapter_dir"]),
         special_chapters,
-        config["has_header"])
+        config["has_header"],
+    )
     book = BookBuilder(config, chapters).build()
     write_book(book, config)
-    collated_reports = collate_reports(book)
-    report = write_report_string(collated_reports)
-    write_reports(_args["reports_dir"], report)
+    if config["report"]:
+        collated_reports = collate_reports(book)
+        report = write_report_string(collated_reports)
+        write_reports(_args["reports_dir"], report)

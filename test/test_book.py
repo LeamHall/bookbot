@@ -14,7 +14,12 @@ import bookbot as bb
 class TestCollate(unittest.TestCase):
     def setUp(self):
         self.chapters = [
-            bb.Chapter(data={"lines": ["header", "Line one.", "Line two."]}),
+            bb.Chapter(
+                data={
+                    "number": 1,
+                    "lines": ["header", "Line one.", "Line two."],
+                }
+            ),
             bb.Chapter(data={"lines": ["header", "Lino unu.", "Lino du."]}),
         ]
         self.config = bb.DEFAULT_CONFIG
