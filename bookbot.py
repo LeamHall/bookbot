@@ -224,8 +224,8 @@ class Chapter:
         self.number = data.get("number", 0)
         self._set_header()
         self._scrub_lines()
-        #self.report = Report(data=self.lines, filename=self.filename)
-        #self.report_data = self.report.report_data()
+        self.report = Report(data=self.lines, filename=self.filename)
+        self.report_data = self.report.report_data()
 
     def __str__(self):
         lines = "\n\n".join(self.lines)
@@ -419,6 +419,6 @@ if __name__ == "__main__":
         config["has_header"])
     book = BookBuilder(config, chapters).build()
     write_book(book, config)
-    #collated_reports = collate_reports(book)
-    #report = write_report_string(collated_reports)
-    #write_reports(_args["reports_dir"], report)
+    collated_reports = collate_reports(book)
+    report = write_report_string(collated_reports)
+    write_reports(_args["reports_dir"], report)
