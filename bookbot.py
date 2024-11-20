@@ -165,17 +165,13 @@ class Report:
         for line in self.lines:
             for p in self.punctuation:
                 self.sentence_count += line.count(p)
-        # Yeah, this is hokey. But resolves a lack of punctuation causing
-        # a ZeroDivisionError
-        if self.sentence_count < len(self.lines):
-            self.sentence_count = len(self.lines)
 
     def _count_words(self):
         """Counts the number of words, ignoring punctuation."""
         self.word_count = 0
         for line in self.lines:
             self.word_count += len(line.split())
-
+    
     def _count_syallables(self):
         """Simplistic syllable counter. Does not handle unicode."""
         self.syllable_count = 0
@@ -204,6 +200,10 @@ class Report:
         """Calculates grade level per:
         https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests
         """
+        if not self.word_count or not self.sentence_count:
+            raise ValueError("Insufficient words or sentences in {}.".format(
+                self.filename))
+
         self.sentence_average = self.word_count / self.sentence_count
         self.syllables_per_word_average = self.syllable_count / self.word_count
         self.grade_level = (
@@ -232,8 +232,11 @@ class Chapter:
         self.number = data.get("number", 0)
         self._set_header()
         self._scrub_lines()
-        self.report = Report(data=self.lines, filename=self.filename)
-        self.report_data = self.report.report_data()
+        try:
+            self.report = Report(data=self.lines, filename=self.filename)
+            self.report_data = self.report.report_data()
+        except ValueError:
+            pass 
 
     def __str__(self):
         lines = "\n\n".join(self.lines)
@@ -241,11 +244,13 @@ class Chapter:
 
     def _set_header(self):
         """Sets the header if present, otherwise to an empty string."""
-        if self._has_header:
-            self.header = self.lines[0]
-            self.lines = self.lines[1:]
-        else:
-            self.header = ""
+        self.header = False
+        try:
+            if self._has_header:
+                self.header = self.lines[0]
+                self.lines = self.lines[1:]
+        except IndexError:
+            pass
 
     def _scrub_lines(self):
         """Removes multiple whitespaces and empty lines."""

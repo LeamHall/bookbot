@@ -7,10 +7,6 @@
 # desc    :  Test the report class.
 
 
-# Notes:
-#   - If there are files with no punctuation it can show up as a
-#     ZeroDivisionError, but it is just the lack of punctuation.
-
 import unittest
 
 import bookbot as bb
@@ -27,7 +23,7 @@ class TestReport(unittest.TestCase):
 
     def test_basic_report(self):
         self.assertIn("one sentence.", self.report.lines)
-        self.assertEqual(self.report.sentence_count, 4)
+        self.assertEqual(self.report.sentence_count, 3)
         self.assertEqual(self.report.word_count, 7)
         self.assertEqual(self.report.syllable_count, 12)
-        self.assertEqual(self.report.grade_level, 5.32)
+        self.assertEqual(self.report.grade_level, 5.55)
