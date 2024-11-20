@@ -171,7 +171,7 @@ class Report:
         self.word_count = 0
         for line in self.lines:
             self.word_count += len(line.split())
-    
+
     def _count_syallables(self):
         """Simplistic syllable counter. Does not handle unicode."""
         self.syllable_count = 0
@@ -201,8 +201,9 @@ class Report:
         https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests
         """
         if not self.word_count or not self.sentence_count:
-            raise ValueError("Insufficient words or sentences in {}.".format(
-                self.filename))
+            raise ValueError(
+                "Insufficient words or sentences in {}.".format(self.filename)
+            )
 
         self.sentence_average = self.word_count / self.sentence_count
         self.syllables_per_word_average = self.syllable_count / self.word_count
@@ -236,7 +237,7 @@ class Chapter:
             self.report = Report(data=self.lines, filename=self.filename)
             self.report_data = self.report.report_data()
         except ValueError:
-            pass 
+            pass
 
     def __str__(self):
         lines = "\n\n".join(self.lines)
