@@ -76,3 +76,17 @@ Process
     6.1.  Remove any extra lines at the top of each page. 
 
 
+  7.      Reduce the image to a decent size.
+    7.1.  Remove all metadata.
+    7.2.  Reduce the .jpg image to 10% quality.
+    7.3.  Rename as <title>_low.jpg and copy it to:
+            /usr/local/src/LeamHall/domiciwarhub.io/docs/images
+
+  8.      Update the index page.
+    8.1.  Copy in the blurb.
+    8.2.  Copy in the Amazon URL.
+    8.3.  Copy the first chapter, edit it to include table data and HTML tags.
+    8.4.  Run build_pages.py, make sure the links work, the HTML works, and it looks good.
+    8.5.  Merge into the domiciwarhub.io repo master and push up. 
+    8.6.  Give github a few minutes, and then check the page. 
+
