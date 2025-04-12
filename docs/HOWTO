@@ -20,17 +20,12 @@ Process
     1.2. Edit -> Find and Replace 
           Find:       __section_break__
           Find All
-          Click "Replace" entry to move focus.
     1.3. Upper menu: Format -> Paragraph -> Text Flow
           "Breaks"    -> Insert
           "Type"      -> Page
           "Position"  -> After
           "Ok"
-    1.4.  Edit -> Find and Replace
-          Find:       __section_break__
-          Replace:    <leave empty>
-          Replace All
-          Close
+    1.4.  Press the standard keyboard "Delete" key.
 
   2.      To select a font not on the list
     2.1.  Use either Garamond or Palantino. Go with Palantino.
