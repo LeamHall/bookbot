@@ -1,0 +1,122 @@
+Claude Code Session 1 Summary
+==============================
+Date: 2026-05-25
+Branch: claude_suggestions_version_1
+
+
+CONTEXT
+-------
+
+bookbot.py is a single-file CLI tool that assembles plain-text chapter files into one output document for LibreOffice formatting. The single-file constraint is intentional and firm: the tool is shared with non-technical friends who do not have Python packaging experience. Tests use Python's built-in unittest module. Developer tools (black, flake8, coverage, semgrep) are acceptable but not part of the runtime. The real book in use is first_contact, located at ../books/first_contact/. Chapter files are plain ASCII text, paragraphs on long single lines, blank lines between paragraphs, and "- - -" used as in-chapter scene breaks.
+
+
+WHAT WAS DONE THIS SESSION
+---------------------------
+
+A new branch was created: claude_suggestions_version_1. All work described below lives on that branch. Master was not modified.
+
+Bugs fixed:
+
+The key "report" was missing from DEFAULT_CONFIG, causing a KeyError in the __main__ block whenever the config file included "report = true". This now exists in DEFAULT_CONFIG with a default of False.
+
+read_config parsed all CLI arguments (author, title, book_dir, etc.) but then silently discarded all of them except --file. Only the TOML file path was ever applied. This is fixed: CLI arguments now override both defaults and the TOML file, in the correct layering order (defaults, then TOML, then CLI).
+
+list_of_files used os.walk, which recurses into subdirectories. The first_contact book has an archive/ subdirectory with old draft files. These were being silently included in the chapter list. Fixed to use os.listdir and only pick up .txt files directly in the target directory.
+
+DEFAULT_CONFIG was a mutable module-level dict and read_config mutated it via .update(). Calling read_config() twice with different config files would accumulate state. Fixed: read_config now works on a copy and never touches DEFAULT_CONFIG.
+
+parse_chapters (now parse_sections) mutated its input specials dict in place. Fixed to return a new dict.
+
+The typo _count_syallables was renamed to _count_syllables in the extracted pure functions.
+
+Refactoring for Rich Hickey simplicity:
+
+The Report class was a stateful object that mixed counting, analysis, and data storage. Replaced with four pure functions: count_sentences, count_words, count_syllables, and readability_stats. Each takes data in, returns a value out, no side effects. The Report class is kept as a backwards-compatibility wrapper for any existing code that uses it.
+
+Chapter was renamed Section internally (Chapter remains as an alias). Section accepts a data dict with either a "lines" key (raw file lines, blank lines preserved) or a "paragraphs" key (already-parsed list). The old lines_from_file stripped blank lines before passing to Chapter, which destroyed paragraph structure. The new load_lines preserves blank lines so parse_paragraphs can detect paragraph boundaries correctly. lines_from_file is kept as a backwards-compat function.
+
+A new parse_paragraphs pure function converts raw lines into a flat list of paragraphs and SCENE_BREAK sentinels. It recognizes "- - -", "***", "---", "* * *", and similar patterns as scene breaks rather than prose. Scene breaks are excluded from word and syllable counts in readability analysis. The sentinel string is the module constant SCENE_BREAK.
+
+A doc_type config key was added (novel, report, sop, generic). This controls how sections are labeled in the output: "Chapter N" for novels, "Section N" for reports, "Step N" for SOPs, no label for generic. This is the hook for using bookbot on non-novel documents.
+
+DocumentBuilder replaces BookBuilder (alias kept). Document replaces Book (alias kept). document_filename replaces book_filename (alias kept). write_document replaces write_book (alias kept). parse_sections replaces parse_chapters (alias kept).
+
+Tests:
+
+103 new tests were added across four new test files. Total test count: 166, all passing.
+
+test/test_text_loading.py covers load_lines, list_of_files, and parse_paragraphs with 44 tests including edge cases for blank lines, scene break variants, multi-line paragraph joining, UTF-8 BOM handling, and subdirectory non-recursion.
+
+test/test_readability.py covers count_sentences, count_words, count_syllables, and readability_stats with 29 tests including scene break exclusion, empty input handling, and grade level range checks.
+
+test/test_section.py covers section_type, Section construction, paragraph handling, stats computation, and __str__ with 30 tests.
+
+test/test_document.py covers DocumentBuilder, Document, document_filename, write_document, and parse_sections with 33 tests including doc_type label variants and scene break rendering.
+
+Existing test files test_chapter.py, test_book.py, and test_config.py were updated to use the new API where the old API was fundamentally incompatible (primarily: passing load_lines output instead of lines_from_file output, and using the "paragraphs" kwarg for already-separated test data).
+
+Code quality: black was run against bookbot.py on the branch.
+
+
+ENGINEERING GAPS IDENTIFIED (NOT YET IMPLEMENTED)
+---------------------------------------------------
+
+The following items were identified but not implemented. They are candidates for the next session (claude_suggestions_version_2 or similar).
+
+
+ACTION LIST FOR NEXT SESSION
+-----------------------------
+
+The items below are ordered roughly by impact. Each is self-contained enough to implement independently.
+
+
+Bug: config key mismatch in real book config
+The file ../books/first_contact/book_config.toml uses "report_dir" but the code expects "reports_dir". The report directory setting has been silently ignored for the life of that config file. Fix by either renaming the code key to "report_dir" (breaking change to DEFAULT_CONFIG and sample config) or updating the real book's config file to use "reports_dir". Also update sample_book_config.toml to match whatever is decided.
+
+Bug: custom_words config key is a ghost
+The key "custom_words" appears in ../books/first_contact/book_config.toml and in docs/requirements.txt ("May take word lists for grade level reading reports") but nothing in the code reads or uses it. It silently passes into the config dict and does nothing. Either implement it (load a file of words, use them to supplement the syllable counter or produce a word-frequency report) or remove it from the real config and document that the feature is not yet implemented.
+
+Improvement: friendly error output in __main__
+Currently any uncaught exception produces a raw Python traceback. Non-technical users should not see these. Wrap the __main__ block body in a main() function and add a try/except in __main__ that catches FileNotFoundError and generic Exception separately, printing plain English messages and calling sys.exit(1) on error. Example: "Error: chapter directory 'chapters' not found. Check your config file." rather than a traceback.
+
+Improvement: add logging with --verbose flag
+There is no logging anywhere in the code. Users have no way to know what files were processed or why something went wrong. Add "import logging" and configure a logger. At INFO level: log each file as it is loaded, the final section count, and the output file path. At WARNING level: log when the config file is not found and defaults are used, and when a section has no readable text for the report. Wire a --verbose flag in parse_args to set the log level to INFO (default is WARNING so normal runs stay quiet).
+
+Improvement: add --version flag
+The version is only in a comment at the top of the file. Add __version__ = "0.1.0" as a module-level constant, then add --version to parse_args using parser.add_argument("--version", action="version", version="%(prog)s " + __version__). This is a standard expectation for CLI tools.
+
+Improvement: add --dry-run flag
+Add a --dry-run flag to parse_args. When set, bookbot should print what it would do (list files to be processed, output file path, report file path) without writing any files. Useful for users who want to verify their config before running. Implementation: add a check after building the Document and before calling write_document.
+
+Refactor: deduplicate file writing
+write_document and write_reports both open a file path and write a string with utf-8 encoding. Extract a private helper _write_text_file(path, content) and call it from both. This removes the duplication and ensures encoding is consistent.
+
+Refactor: derive read_config override keys from DEFAULT_CONFIG
+In read_config, the list of keys that can be overridden by CLI args is hardcoded: ("author", "book_dir", "chapter_dir", ...). If a new config key is added to DEFAULT_CONFIG, it must also be added to this list manually or it will never be overridable from the CLI. Replace with logic that checks which args keys are also in DEFAULT_CONFIG and have non-None values. This makes the function self-maintaining.
+
+Code quality: fix _has_header visibility
+The Section class stores the has_header flag as self._has_header (private by convention). One test in test_section.py accesses it directly (s._has_header). Either make it public (self.has_header) or remove the direct attribute test and test the behavior indirectly (title is set or not set). The current state is inconsistent: it behaves like internal state but is tested as public.
+
+Makefile: separate format and check targets
+The current "all" target runs black (which reformats files) and flake8 in the same pass. This is wrong for CI: a CI pipeline should check without modifying files. Add a "format" target that runs black and isort to modify files. Add a "check" target that runs "black --check" (fails if files would change, does not modify them) and flake8. The "all" target should use "check", not "format". This prevents CI from silently reformatting code on a build server.
+
+Makefile: add .PHONY for all targets
+Only "test" is currently declared .PHONY. Add clean, coverage, lint, format, check, all, and install-dev to .PHONY so make does not confuse them with files of the same name.
+
+Makefile: add coverage minimum threshold
+"coverage report -m" shows missing lines but does not fail the build if coverage is low. Change to "coverage report -m --fail-under=80" to enforce a quality gate. Adjust the threshold as appropriate once current coverage is measured.
+
+Makefile: add mypy target
+Add mypy to developer_requirements.txt and to a "lint" Makefile target. Running "python -m mypy bookbot.py" would have caught the missing "chapters" attribute on DocumentBuilder before the tests found it. Type annotations are optional to add to the source, but mypy in --ignore-missing-imports mode will still catch many errors without requiring full annotation of the codebase.
+
+Makefile: add install-dev target
+Add "install-dev" as a Makefile target that runs "pip install -r docs/developer_requirements.txt". A new contributor should be able to run "make install-dev" to get the full development environment. Add mypy, isort, and bandit to docs/developer_requirements.txt.
+
+Makefile: replace semgrep generic with bandit
+semgrep with "p/default" is a broad scan not specific to Python. bandit is purpose-built for Python security scanning and is quieter and more actionable. Add bandit to developer_requirements.txt and to the lint target: "bandit -q bookbot.py". Keep semgrep if desired but run it separately from routine quality checks.
+
+Future feature: inline italic markup
+The user needs a way to mark back-story scenes for italic formatting. The suggested convention is _text_ (underscores wrapping the italic passage). bookbot should pass _text_ through unchanged in the output. The LibreOffice HOWTO should be updated with a find-and-replace step: Find regex "_(.+?)_", Replace with the matched group formatted as italic. No code change needed beyond documenting the convention and the LibreOffice steps.
+
+Future feature: --list-sections flag
+For a book with 80+ chapters, it would be useful to preview the assembly order without building the full document. Add --list-sections to print the ordered list of files that would be processed, their types (chapter, prologue, etc.), and their sizes (word count), then exit without writing output.
