@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 
 # name    :  bookbot.py
-# version :  0.0.1
-# date    :  20230923
+# version :  0.1.0
+# date    :  20260525
 # author  :  Leam Hall
-# desc    :  Assembles and reports on a text file based book.
-
-
-## Notes
+# desc    :  Assembles and reports on text file based documents.
+#            Supports novels, reports, SOPs, and other plain-text document types.
 
 import argparse
 import errno
@@ -17,426 +15,647 @@ import re
 import sys
 import tomllib
 
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
 DEFAULT_CONFIG = {
     "author": "",
     "book_dir": "book",
     "chapter_dir": "chapters",
-    "has_header": True,
+    "has_header": False,
     "section_break": "\n__section_break__\n",
+    "scene_break_pattern": r"^[-*~\s]{3,}$",
     "reports_dir": "reports",
     "title": "",
+    "report": False,
+    "doc_type": "novel",
+}
+
+SPECIAL_SECTION_NAMES = frozenset(
+    [
+        "title",
+        "isbn",
+        "prologue",
+        "epilogue",
+        "afterward",
+        "author_bio",
+        "more",
+    ]
+)
+
+SCENE_BREAK = "__scene_break__"
+
+DOC_TYPE_SECTION_LABEL = {
+    "novel": "Chapter",
+    "report": "Section",
+    "sop": "Step",
+    "generic": "",
 }
 
 
-special_chapters = {
-    "title": "",
-    "isbn": "",
-    "prologue": "",
-    "epilogue": "",
-    "afterward": "",
-    "author_bio": "",
-    "more": "",
-}
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
 
 
-def parse_args(args=[]):
-    """Returns the parsed arguments."""
-    parser = argparse.ArgumentParser()
+def parse_args(args=None):
+    """Returns parsed CLI arguments as a dict. Pass args=[] for defaults."""
+    parser = argparse.ArgumentParser(
+        description="Assemble text files into a formatted document."
+    )
     parser.add_argument(
         "-f",
         "--file",
         help="Config file in TOML format.",
         default="book_config.toml",
     )
-    parser.add_argument("-a", "--author", help="Author name")
+    parser.add_argument("-a", "--author", help="Author name", default=None)
     parser.add_argument(
-        "-b", "--book_dir", help="Directory for book results.", default="book"
+        "-b",
+        "--book_dir",
+        help="Directory for assembled output.",
+        default=None,
     )
     parser.add_argument(
         "-c",
         "--chapter_dir",
-        help="Directory for chapters.",
-        default="chapters",
+        help="Directory containing section files.",
+        default=None,
     )
     parser.add_argument(
-        "--has_header", help="Chapters have headers?", default=True
+        "--has_header",
+        help="Section files begin with a title line.",
+        action="store_true",
+        default=None,
     )
     parser.add_argument(
         "-p",
         "--section_break",
-        help="String used to identify section_break locations",
-        default="\n__section_break__\n",
+        help="String inserted between sections in output.",
+        default=None,
     )
     parser.add_argument(
-        "-r", "--reports_dir", help="Directory for reports.", default="reports"
+        "-r",
+        "--reports_dir",
+        help="Directory for report output.",
+        default=None,
     )
-    parser.add_argument("-t", "--title", help="Book title")
-    return vars(parser.parse_args(args))
+    parser.add_argument("-t", "--title", help="Document title", default=None)
+    parser.add_argument(
+        "--doc_type",
+        help="Document type: novel, report, sop, generic.",
+        default=None,
+    )
+    return vars(parser.parse_args(args if args is not None else []))
+
+
+def read_config(_args=None, base_config=None):
+    """
+    Returns a config dict by layering: defaults, then TOML file, then CLI args.
+    Never mutates DEFAULT_CONFIG.
+    """
+    config = dict(DEFAULT_CONFIG if base_config is None else base_config)
+
+    if _args is None:
+        return config
+
+    toml_path = _args.get("file", "book_config.toml")
+    try:
+        with open(toml_path, "rb") as f:
+            config.update(tomllib.load(f))
+    except (KeyError, FileNotFoundError):
+        pass
+
+    for key in (
+        "author",
+        "book_dir",
+        "chapter_dir",
+        "section_break",
+        "reports_dir",
+        "title",
+        "doc_type",
+    ):
+        if _args.get(key) is not None:
+            config[key] = _args[key]
+
+    if _args.get("has_header") is not None:
+        config["has_header"] = _args["has_header"]
+
+    return config
+
+
+def setup_dirs(conf=None, root_dir=None):
+    """Creates output directories if they do not exist."""
+    if not conf:
+        raise TypeError("program config required")
+    root = root_dir or os.getcwd()
+    for key in ("book_dir", "reports_dir", "chapter_dir"):
+        new_dir = os.path.join(root, conf[key])
+        if not os.path.exists(new_dir):
+            os.mkdir(new_dir, mode=0o0750)
+
+
+# ---------------------------------------------------------------------------
+# File I/O
+# ---------------------------------------------------------------------------
+
+
+def load_lines(filename):
+    """
+    Returns all lines from a file with trailing whitespace stripped.
+    Blank lines are preserved — they carry paragraph structure.
+    """
+    with open(filename, "r", encoding="utf-8-sig") as f:
+        return [line.rstrip() for line in f]
 
 
 def list_of_files(target_dir):
     """
-    Takes a target directory and returns the list of filenames.
+    Returns a sorted list of .txt file paths in target_dir.
+    Non-recursive: subdirectories (e.g. archive/) are ignored.
     """
     if not os.path.isdir(target_dir):
         raise FileNotFoundError(
             errno.ENOENT, os.strerror(errno.ENOENT), target_dir
         )
-    filenames = []
-    for root, dirs, files in os.walk(target_dir):
-        for file in files:
-            if file.endswith(".txt"):
-                filenames.append(os.path.join(target_dir, file))
+    filenames = sorted(
+        os.path.join(target_dir, f)
+        for f in os.listdir(target_dir)
+        if f.endswith(".txt") and os.path.isfile(os.path.join(target_dir, f))
+    )
     if not filenames:
         raise FileNotFoundError(
             errno.ENOENT, os.strerror(errno.ENOENT), target_dir
         )
-    return sorted(filenames)
+    return filenames
 
 
-def lines_from_file(filename):
+# ---------------------------------------------------------------------------
+# Text parsing
+# ---------------------------------------------------------------------------
+
+
+def parse_paragraphs(lines, scene_break_pattern=None):
     """
-    Returns a list of non-blank lines in the file.
+    Converts raw lines into a flat list of paragraphs and scene break markers.
+
+    Rules:
+      - Blank lines are paragraph separators.
+      - Lines matching scene_break_pattern become SCENE_BREAK sentinels.
+      - Consecutive non-blank, non-break lines are joined into one paragraph.
+
+    Inline italic markup (_text_) passes through unchanged for downstream
+    processing by the user's word processor.
     """
-    file_data = []
-    with open(filename, "r", encoding="utf-8-sig") as in_f:
-        for line in in_f.readlines():
-            line = line.strip()
-            if line:
-                file_data.append(line)
-    return file_data
+    pattern = re.compile(
+        scene_break_pattern or DEFAULT_CONFIG["scene_break_pattern"]
+    )
+    result = []
+    current = []
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            if current:
+                result.append(" ".join(current))
+                current = []
+        elif pattern.match(stripped):
+            if current:
+                result.append(" ".join(current))
+                current = []
+            result.append(SCENE_BREAK)
+        else:
+            current.append(" ".join(stripped.split()))
+
+    if current:
+        result.append(" ".join(current))
+
+    return result
 
 
-def chapter_type(filename):
-    """Returns the type of the chapter, based on filename."""
-    p = Path(filename)
-    if p.stem in special_chapters:
-        return p.stem
-    return "chapter"
+def section_type(filename):
+    """Returns the section type: a special name if the stem is recognized, else 'chapter'."""
+    stem = Path(filename).stem
+    return stem if stem in SPECIAL_SECTION_NAMES else "chapter"
 
 
-def read_config(_args={}, config=DEFAULT_CONFIG):
+# ---------------------------------------------------------------------------
+# Readability analysis  (pure functions — no side effects, no state)
+# ---------------------------------------------------------------------------
+
+
+def count_sentences(text):
+    """Counts sentence-ending punctuation (. ? !) in text."""
+    return sum(text.count(p) for p in ".?!")
+
+
+def count_words(text):
+    """Counts whitespace-delimited tokens in text."""
+    return len(text.split())
+
+
+def count_syllables(text):
     """
-    Takes the default configuration dict and parsed arguments,
-    and returns a dict of configuration.
+    Simple English syllable estimator.
+    Counts vowels, subtracts common double-vowel sequences, and adjusts
+    for silent-e and consonantal-y word endings.
+    Returns at least 1 to avoid division-by-zero in grade computation.
     """
-    try:
-        with open(_args["file"], "rb") as f:
-            data = tomllib.load(f)
-        config.update(data)
-    except (KeyError, FileNotFoundError):
-        pass
-    return config
+    VOWELS = "aeiou"
+    DOUBLES = ("ee", "oi", "oo", "ou")
+
+    lowered = text.lower()
+    total = sum(lowered.count(v) for v in VOWELS)
+    total -= sum(lowered.count(d) for d in DOUBLES)
+
+    scrubbed = re.sub(r'[.?!"\']', " ", lowered)
+    for word in scrubbed.split():
+        if word.endswith("ey") or word.endswith("e"):
+            total -= 1
+        if word.endswith("y"):
+            total += 1
+
+    return max(total, 1)
 
 
-def setup_dirs(conf=None, root_dir=None):
+def readability_stats(paragraphs, filename=""):
     """
-    Creates the required directories if they are not available.
+    Computes Flesch-Kincaid grade level for a list of paragraphs.
+    SCENE_BREAK sentinels are excluded from analysis.
+    Raises ValueError if there is insufficient text.
+    Returns a dict with sentence_count, word_count, syllable_count,
+    sentence_average, syllables_per_word_average, grade_level, filename.
     """
-    if not conf:
-        raise TypeError("program config required")
-    if not root_dir:
-        root_dir = os.getcwd()
-    for d in [conf["book_dir"], conf["reports_dir"], conf["chapter_dir"]]:
-        new_dir = os.path.join(root_dir, d)
-        if not os.path.exists(new_dir):
-            os.mkdir(new_dir, mode=0o0750)
+    prose = " ".join(p for p in paragraphs if p != SCENE_BREAK)
 
+    sentences = count_sentences(prose)
+    words = count_words(prose)
+    syllables = count_syllables(prose)
 
-class Report:
-
-    def __init__(self, data, filename):
-        self.punctuation = [".", "?", "!"]
-        self.vowels = ["a", "e", "i", "o", "u"]
-        self.doubles = ["ee", "oi", "oo", "ou"]
-        self.quotes = ['"', "'"]
-        self.filename = filename
-        self.lines = list()
-        for line in data:
-            self.lines.append(line.lower())
-        self._count_sentences()
-        self._count_words()
-        self._count_syallables()
-        self._grade_report()
-
-    def _count_sentences(self):
-        """Counts the number of sentence ending marks."""
-        self.sentence_count = 0
-        for line in self.lines:
-            for p in self.punctuation:
-                self.sentence_count += line.count(p)
-
-    def _count_words(self):
-        """Counts the number of words, ignoring punctuation."""
-        self.word_count = 0
-        for line in self.lines:
-            self.word_count += len(line.split())
-
-    def _count_syallables(self):
-        """Simplistic syllable counter. Does not handle unicode."""
-        self.syllable_count = 0
-        for line in self.lines:
-            for v in self.vowels:
-                self.syllable_count += line.count(v)
-            for d in self.doubles:
-                self.syllable_count -= line.count(d)
-            scrubbed_line = line
-            for p in self.punctuation:
-                scrubbed_line = scrubbed_line.replace(p, " ")
-            for q in self.quotes:
-                scrubbed_line = scrubbed_line.replace(q, " ")
-            words = scrubbed_line.split()
-            for word in words:
-                for phrase in ["e", "ey"]:
-                    if word.endswith(phrase):
-                        self.syllable_count -= 1
-                for phrase in ["y"]:
-                    if word.endswith(phrase):
-                        self.syllable_count += 1
-        if self.syllable_count < 1:
-            self.syllable_count = 1
-
-    def _grade_report(self):
-        """Calculates grade level per:
-        https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests
-        """
-        if not self.word_count or not self.sentence_count:
-            raise ValueError(
-                "Insufficient words or sentences in {}.".format(self.filename)
+    if not words or not sentences:
+        raise ValueError(
+            "Insufficient text to compute readability in {!r}.".format(
+                filename
             )
-
-        self.sentence_average = self.word_count / self.sentence_count
-        self.syllables_per_word_average = self.syllable_count / self.word_count
-        self.grade_level = (
-            (0.39 * self.sentence_average)
-            + (11.8 * self.syllables_per_word_average)
-            - 15.59
         )
-        self.grade_level = float("{:.2f}".format(self.grade_level))
 
-    def report_data(self):
-        """Collates and returns report data."""
-        data = dict()
-        data["filename"] = self.filename
-        data["sentence_average"] = self.sentence_average
-        data["grade_level"] = self.grade_level
-        data["syllables_per_word_average"] = self.syllables_per_word_average
-        return data
+    sentence_avg = words / sentences
+    syllables_per_word = syllables / words
+    grade = round(
+        (0.39 * sentence_avg) + (11.8 * syllables_per_word) - 15.59, 2
+    )
+
+    return {
+        "filename": filename,
+        "sentence_count": sentences,
+        "word_count": words,
+        "syllable_count": syllables,
+        "sentence_average": sentence_avg,
+        "syllables_per_word_average": syllables_per_word,
+        "grade_level": grade,
+    }
 
 
-class Chapter:
-    def __init__(self, data={}):
-        self.lines = data.get("lines", [])
-        self._has_header = data.get("has_header", True)
+# ---------------------------------------------------------------------------
+# Section
+# ---------------------------------------------------------------------------
+
+
+class Section:
+    """
+    A single section of a document: a chapter, a report section, a SOP step,
+    or a special page (prologue, epilogue, etc.).
+
+    Accepts a data dict with these keys:
+      lines       - raw file lines (blank lines preserved); parsed internally
+      paragraphs  - pre-parsed paragraph list (takes precedence over lines)
+      has_header  - bool; if True, first paragraph becomes the section title
+      filename    - source filename (used in readability reports)
+      type        - "chapter" or a special section name
+      number      - int; set externally by DocumentBuilder
+      scene_break_pattern - optional regex override for scene break detection
+    """
+
+    def __init__(self, data=None):
+        if data is None:
+            data = {}
+        self._has_header = data.get("has_header", False)
         self.filename = data.get("filename", "")
         self.type = data.get("type", "chapter")
         self.number = data.get("number", 0)
-        self._set_header()
-        self._scrub_lines()
+        self.title = None
+
+        if "paragraphs" in data:
+            self.paragraphs = list(data["paragraphs"])
+        else:
+            self.paragraphs = parse_paragraphs(
+                data.get("lines", []),
+                data.get("scene_break_pattern"),
+            )
+
+        self._extract_title()
+        self.stats = None
+        self._compute_stats()
+
+    def _extract_title(self):
+        """Pops the first non-break paragraph as the section title when has_header is set."""
+        if self._has_header and self.paragraphs:
+            candidate = self.paragraphs[0]
+            if candidate != SCENE_BREAK:
+                self.title = candidate
+                self.paragraphs = self.paragraphs[1:]
+
+    def _compute_stats(self):
         try:
-            self.report = Report(data=self.lines, filename=self.filename)
-            self.report_data = self.report.report_data()
+            self.stats = readability_stats(self.paragraphs, self.filename)
         except ValueError:
-            pass
+            self.stats = None
 
     def __str__(self):
-        lines = "\n\n".join(self.lines)
-        return lines
+        parts = []
+        for p in self.paragraphs:
+            parts.append("- - -" if p == SCENE_BREAK else p)
+        return "\n\n".join(parts)
 
-    def _set_header(self):
-        """Sets the header if present, otherwise to an empty string."""
-        self.header = False
-        try:
-            if self._has_header:
-                self.header = self.lines[0]
-                self.lines = self.lines[1:]
-        except IndexError:
-            pass
+    # --- Backwards-compatibility properties ---
 
-    def _scrub_lines(self):
-        """Removes multiple whitespaces and empty lines."""
-        clean_lines = []
-        for line in self.lines:
-            line = line.strip()
-            if line:
-                clean_lines.append(" ".join(line.split()))
-        self.lines = clean_lines
+    @property
+    def header(self):
+        return self.title
 
-    # def _set_type(self):
-    #    """Sets the chapter type, based on SPECIAL_LIST."""
-    #    if self.lines[0] in SPECIAL_LIST:
-    #        self.type = self.lines.pop(0)
-    #        self.number = False
-    #    else:
-    #        self.type = "chapter"
-    #        self.number = True
+    @property
+    def lines(self):
+        return [p for p in self.paragraphs if p != SCENE_BREAK]
 
-    ## Working with individual Chapters
-    # pull each chapter into its own object
-    # - [Done] strip beginning and ending whitespace.
-    # - [Done] break sentences into list items.
-    # -- [Done] include closing quotes
-    # - [Done] remove two or more spaces next to each other.
-    # - [Done] get word and sentence counts.
-    # - [Done] get average sentence lengths.
-    # - [done] deal with chapter headers, like [this]
-    # - [done] format to be easier to bold chapter number and datetimes.
-    # - format extended spacers
-    # - do grade analysis.
-    # - count words used for each grade's word lists.
-    # - no indent for epub, has para spacing.
-    # - indent for print, no para spacing.
+    @property
+    def report(self):
+        return self.stats
+
+    @property
+    def report_data(self):
+        return self.stats
 
 
-# def order_chapters(chapters, special_list):
-#    """
-#    Removes special chapters from chapter list, and returns the reduced
-#    list of chapters, and the specificaly sorted order of specials.
-#    """
-#    new_chapters = list()
-#    temp_specials = list()
-#    specials = list()
-#    for chapter in chapters:
-#        if chapter in special_list:
-#            temp_specials.append(chapter)
-#        else:
-#            new_chapters.append(chapter)
-#    for special in special_list:
-#        if special in temp_specials:
-#            specials.append(special)
-#
-#    return new_chapters, specials
+# ---------------------------------------------------------------------------
+# Document building
+# ---------------------------------------------------------------------------
 
 
-class BookBuilder:
+class DocumentBuilder:
+    """
+    Assembles a list of Section objects into a Document.
+    doc_type controls how sections are labeled in the output:
+      "novel"   -> Chapter N
+      "report"  -> Section N
+      "sop"     -> Step N
+      "generic" -> (no label)
+    """
+
     def __init__(
-        self, config={}, chapters=[], special_chapters=special_chapters
+        self, config=None, sections=None, special_sections=None, chapters=None
     ):
-        self.config = DEFAULT_CONFIG | config
-        self.chapters = chapters
-        self.special_chapters = special_chapters
-        self.text = ""
+        self.config = dict(DEFAULT_CONFIG)
+        if config:
+            self.config.update(config)
+        self.sections = list(sections or chapters or [])
+        self.special_sections = dict(special_sections or {})
 
-    def write_chapter(self, chapter):
-        """Returns a string of the chapter, with additions."""
+    @property
+    def chapters(self):
+        return self.sections
+
+    def _section_label(self, section):
+        doc_type = self.config.get("doc_type", "novel")
+        label = DOC_TYPE_SECTION_LABEL.get(doc_type, "")
+        if label and section.number:
+            return "{} {}".format(label, section.number)
+        return ""
+
+    def _render_section(self, section):
+        """Returns the formatted text for one section."""
         section_break = self.config["section_break"]
-        text = section_break
-        if chapter.number:
-            text += "Chapter {}\n\n".format(chapter.number)
-        if chapter.header:
-            text += "{}\n\n".format(chapter.header)
-        for line in chapter.lines:
-            text += "\n\n" + line
-        return text.rstrip()
+        parts = [section_break.rstrip("\n")]
+
+        label = self._section_label(section)
+        if label:
+            parts.append(label)
+        if section.title:
+            parts.append(section.title)
+
+        for p in section.paragraphs:
+            parts.append("- - -" if p == SCENE_BREAK else p)
+
+        return "\n\n".join(parts)
+
+    def write_chapter(self, section):
+        """Backwards-compatible alias for _render_section."""
+        return self._render_section(section)
 
     def build(self):
-        """Returns the Book object."""
-        book = Book()
-        book.author = self.config["author"]
-        chapter_number = 0
-        for chapter in self.chapters:
-            if chapter.type == "chapter":
-                chapter_number += 1
-                chapter.number = chapter_number
-            book.text += self.write_chapter(chapter)
-            book.chapters.append(chapter)
-        book.text += "\n\n"
-        return book
+        """Assembles and returns a Document."""
+        doc = Document()
+        doc.author = self.config.get("author", "")
+        doc.title = self.config.get("title", "")
+
+        section_number = 0
+        for section in self.sections:
+            if section.type == "chapter":
+                section_number += 1
+                section.number = section_number
+            doc.text += self._render_section(section)
+            doc.sections.append(section)
+
+        doc.text += "\n\n"
+        return doc
 
 
-class Book:
+class Document:
+    """The assembled document."""
+
     def __init__(self, text=""):
         self.text = text
-        self.chapters = list()
+        self.sections = []
+        self.author = ""
+        self.title = ""
+
+    # Backwards compat: old Book stored chapters, not sections
+    @property
+    def chapters(self):
+        return self.sections
 
 
-def book_filename(config, file_type="txt"):
-    """Munges the title into something that is easy to deal with."""
-    title = config["title"].lower()
-    title = re.sub(r"[\W]", " ", title)
-    title_words = title.split()
-    title = "_".join(title_words)
-    title += "." + file_type
-    return title
+# ---------------------------------------------------------------------------
+# Output
+# ---------------------------------------------------------------------------
 
 
-# Write book files; print, text, pdf(?)
-def write_book(book, config):
+def document_filename(config, file_type="txt"):
+    """Converts the document title into a safe filename."""
+    title = config.get("title", "") or "untitled"
+    title = title.lower()
+    title = re.sub(r"[^\w\s]", " ", title)
+    title = "_".join(title.split())
+    return title + "." + file_type
+
+
+def write_document(doc, config):
+    """Writes the assembled document text to the book directory."""
     book_dir = config["book_dir"]
-    book_file = book_filename(config, "txt")
-    book_name = os.path.join(book_dir, book_file)
-    with open(book_name, "w", encoding="utf-8") as b:
-        b.write(book.text)
+    filename = document_filename(config, "txt")
+    path = os.path.join(book_dir, filename)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(doc.text)
 
 
-def collate_reports(book):
-    """Builds a list of reports from each chapter. Does this go in book?"""
-    chapter_reports = []
-    for chapter in book.chapters:
-        chapter_reports.append(chapter.report_data)
-    return chapter_reports
+def collate_reports(doc):
+    """Returns a list of readability stat dicts for sections that have stats."""
+    return [s.stats for s in doc.sections if s.stats is not None]
 
 
 def write_report_string(reports):
-    """Takes the reports and builds a string.
-    Need to figure out if this goes into the Book, or someplace else.
-    """
-    grade_levels = list()
-    report_string = ""
-    for report in reports:
-        report_string += "Filename: {}\n".format(report["filename"])
-        report_string += "Grade Level: {:.1f}\n".format(report["grade_level"])
-        grade_levels.append(report["grade_level"])
-        report_string += "\n"
-
-    report_string += "Average Grade Level: {:.1f}".format(
-        sum(grade_levels) / len(grade_levels)
-    )
-    return report_string
+    """Formats readability report dicts into a human-readable string."""
+    if not reports:
+        return "No report data available."
+    grade_levels = []
+    lines = []
+    for r in reports:
+        lines.append("Filename: {}".format(r["filename"]))
+        lines.append("Grade Level: {:.1f}".format(r["grade_level"]))
+        lines.append("")
+        grade_levels.append(r["grade_level"])
+    avg = sum(grade_levels) / len(grade_levels)
+    lines.append("Average Grade Level: {:.1f}".format(avg))
+    return "\n".join(lines)
 
 
 def write_reports(reports_dir, report_string):
-    """Writes the report file(s)."""
-    # Needs to check for/create report directory.
-    report_filename = os.path.join(reports_dir, "report.txt")
-    with open(report_filename, "w") as f:
+    """Writes the report string to reports_dir/report.txt."""
+    path = os.path.join(reports_dir, "report.txt")
+    with open(path, "w", encoding="utf-8") as f:
         f.write(report_string)
 
 
-def parse_chapters(files, specials, has_header=False):
-    """Takes a list of files and returns list of
-    Chapter objects and a dict of Special Chapter objects."""
-    chapters = []
-    chapter_count = 0
-    special_chapters = specials
-    for file in files:
-        data = {}
-        data["lines"] = lines_from_file(file)
-        data["has_header"] = has_header
-        data["filename"] = os.path.basename(file)
-        data["type"] = chapter_type(file)
-        if data["type"] in special_chapters:
-            special_name = data["type"]
-            special_chapters[special_name] = Chapter(data)
-        else:
-            chapter_count += 1
-            data["number"] = chapter_count
-            chapters.append(Chapter(data))
-    return chapters, special_chapters
+# ---------------------------------------------------------------------------
+# Section parsing
+# ---------------------------------------------------------------------------
 
+
+def parse_sections(
+    files, specials=None, has_header=False, scene_break_pattern=None
+):
+    """
+    Reads a list of file paths and returns (sections, special_sections).
+
+    sections        - list of Section objects for regular chapters
+    special_sections - dict mapping name to Section for special pages
+                       Keys for unfound specials are set to None.
+
+    Does not mutate the passed specials dict.
+    """
+    base_specials = (
+        dict(specials)
+        if specials is not None
+        else {name: None for name in SPECIAL_SECTION_NAMES}
+    )
+
+    sections = []
+    found_specials = {}
+
+    for filepath in files:
+        lines = load_lines(filepath)
+        stype = section_type(filepath)
+        data = {
+            "lines": lines,
+            "has_header": has_header,
+            "filename": os.path.basename(filepath),
+            "type": stype,
+            "scene_break_pattern": scene_break_pattern,
+        }
+        sec = Section(data)
+        if stype in base_specials:
+            found_specials[stype] = sec
+        else:
+            sections.append(sec)
+
+    result_specials = dict(base_specials)
+    result_specials.update(found_specials)
+    return sections, result_specials
+
+
+# ---------------------------------------------------------------------------
+# Backwards-compatibility aliases
+# Existing user scripts and tests that import these names continue to work.
+# ---------------------------------------------------------------------------
+
+
+def lines_from_file(filename):
+    """Returns non-blank lines from a file. Use load_lines() for raw access."""
+    return [l.strip() for l in load_lines(filename) if l.strip()]
+
+
+chapter_type = section_type
+Chapter = Section
+BookBuilder = DocumentBuilder
+Book = Document
+book_filename = document_filename
+write_book = write_document
+parse_chapters = parse_sections
+
+
+class Report:
+    """
+    Backwards-compatible wrapper around the pure readability functions.
+    New code should call readability_stats() directly.
+    """
+
+    def __init__(self, data, filename):
+        paragraphs = [line.lower() for line in data if line.strip()]
+        self.lines = paragraphs
+        self.filename = filename
+        stats = readability_stats(paragraphs, filename)
+        self.sentence_count = stats["sentence_count"]
+        self.word_count = stats["word_count"]
+        self.syllable_count = stats["syllable_count"]
+        self.sentence_average = stats["sentence_average"]
+        self.syllables_per_word_average = stats["syllables_per_word_average"]
+        self.grade_level = stats["grade_level"]
+
+    def report_data(self):
+        return {
+            "filename": self.filename,
+            "sentence_average": self.sentence_average,
+            "grade_level": self.grade_level,
+            "syllables_per_word_average": self.syllables_per_word_average,
+        }
+
+
+# Module-level dict kept for scripts that access bb.special_chapters directly
+special_chapters = {name: "" for name in SPECIAL_SECTION_NAMES}
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    _args = parse_args(args=sys.argv[1:])
+    _args = parse_args(sys.argv[1:])
     config = read_config(_args)
     setup_dirs(config)
-    chapters, specials = parse_chapters(
+
+    scene_pat = config.get("scene_break_pattern")
+    sections, specials = parse_sections(
         list_of_files(config["chapter_dir"]),
-        special_chapters,
-        config["has_header"],
+        has_header=config["has_header"],
+        scene_break_pattern=scene_pat,
     )
-    book = BookBuilder(config, chapters).build()
-    write_book(book, config)
-    if config["report"]:
-        collated_reports = collate_reports(book)
-        report = write_report_string(collated_reports)
-        write_reports(_args["reports_dir"], report)
+
+    doc = DocumentBuilder(config=config, sections=sections).build()
+    write_document(doc, config)
+
+    if config.get("report"):
+        reports = collate_reports(doc)
+        if reports:
+            report_str = write_report_string(reports)
+            write_reports(config["reports_dir"], report_str)
