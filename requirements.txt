@@ -1,0 +1,9 @@
+# There are no runtime dependencies for bookbot.py. It uses the Python
+# standard library only, and that is a deliberate constraint rather than
+# an oversight. This file exists to say so.
+#
+# bin/cefr_bands.py optionally uses reference word lists. Those are data,
+# not packages. See data/README for what they are, where to get them, and
+# how to build your own.
+#
+# Developer tools are in requirements_dev.txt.

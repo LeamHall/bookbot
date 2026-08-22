@@ -2,7 +2,11 @@ import unittest
 import os
 import tempfile
 import shutil
-from pov_copy import parse_pov_list, find_chapters_for_character, copy_chapters
+from bin.pov_copy import (
+    parse_pov_list,
+    find_chapters_for_character,
+    copy_chapters,
+)
 
 
 class TestParsePovList(unittest.TestCase):

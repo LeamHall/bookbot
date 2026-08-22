@@ -1,0 +1,111 @@
+ANALYSIS COMMANDS
+
+
+The shell commands used in the August 2026 read-through of Agent, collected so the same work can be run against the other books. Paths are written as placeholders. Replace BOOKDIR with the book's directory, for example /usr/local/src/LeamHall/books/captain/ and replace SCRATCH with wherever you want throwaway files to land.
+
+This is a record of what was actually run, not a recommendation that all of it is worth running. Read the note at the end about batch reading before you reuse section 3.
+
+
+1. SURVEY, RUN ONCE PER BOOK
+
+Get the shape of the repository before reading anything.
+
+    cd BOOKDIR
+    ls -la && find . -type f -not -path './.git/*' | head -100
+    git log --oneline -25
+    cat book_config.toml
+    ls chapters | wc -l
+
+Check for the things a book repo may or may not have.
+
+    ls -la bin .claude gmc platform research extras chapter_shorts reports
+    cat .gitignore
+    head -3 notes/chapter_energy_theme_pov.csv notes/chapter_journey.csv notes/chapter_words_journey.csv
+    cat notes/stopped_at
+
+
+2. CHAPTER QA, FORMAT AND CONVENTION CHECKS
+
+Longest line in the manuscript. Confirms nothing has been hard wrapped. Expect a number in the hundreds or low thousands, not seventy or eighty.
+
+    awk '{ if (length($0)>m) m=length($0)} END {print m}' chapters/*.txt
+
+Quotation mark mix. Both counts being large is normal and expected; the text is not normalized and should not be.
+
+    grep -o '[“”’]' chapters/*.txt | wc -l
+    grep -o '"' chapters/*.txt | wc -l
+
+Section break markers, if the book uses them. Agent's config declares one but no chapter contains it.
+
+    grep -c "__section_break__" chapters/*.txt | grep -v ":0"
+
+Header line spot check. Every chapter should open with the bracketed timestamp line.
+
+    head -1 chapters/FILENAME.txt
+
+Live word count against the recorded one. Agent's notes/word_count.txt was stale by six files and roughly six thousand words.
+
+    cat chapters/*.txt | wc -w
+    wc -l notes/word_count.txt
+    awk '{s+=$1} END {print "recorded total:", s}' notes/word_count.txt
+
+Location portion of the filenames, to see where the story physically moves.
+
+    ls chapters | sed 's/_.*//' | sort -u
+
+
+3. BATCH READING
+
+Numbered inventory of chapters. Alphabetical order is chronological order, so the numbers here are the reading order.
+
+    cd BOOKDIR/chapters && ls -1 *.txt | cat -n
+
+Read a range of chapters. Eleven at a time was the size used.
+
+    for f in $(ls -1 *.txt | sed -n '12,22p'); do
+      echo "########## FILE: $f ##########"; cat "$f"; echo;
+    done
+
+Same thing but sized first, when you are unsure how heavy a batch will be.
+
+    for f in $(ls -1 *.txt | sed -n '23,33p'); do
+      echo "########## FILE: $f ##########"; cat "$f"; echo;
+    done > SCRATCH/batch3.txt
+    wc -w SCRATCH/batch3.txt
+
+
+4. INCREMENTAL NOTES
+
+Append after every batch so an interrupted session loses at most one batch. The quoted EOF matters, it stops the shell expanding anything inside the notes.
+
+    cat >> SCRATCH/working_notes.txt <<'EOF'
+
+    BATCH 3, CHAPTERS 23 TO 33
+
+    ...notes...
+    EOF
+
+
+5. CLEANUP PASS, FINDING PROCESS NARRATION IN REPORTS
+
+These enforce the rule that reports state findings directly and do not narrate the analysis that produced them. Run them over reports/ after the writing is done.
+
+Which files are affected at all.
+
+    cd BOOKDIR/reports
+    grep -licE "\bI (wrote|read|had|first|originally|missed|described|tagged|flagged|logged|guessed)|WITHDRAWN|CORRECTED|CORRECTION|originally|first pass|on first read|per the author" *.txt
+
+Line by line, with dialogue excluded so a character saying "I" does not match.
+
+    grep -nE "\b(I|my|me)\b|originally|WITHDRAWN|CORRECTED|CORRECTION|first pass|per the author" notes_*.txt | grep -vE "\""
+
+The same over the summary files.
+
+    grep -nE "\b(I|my|me)\b|originally|WITHDRAWN|CORRECTED|first pass|per the author" agent_*.txt | grep -vE "\""
+
+The grep -vE on a double quote is doing real work. Without it every quoted line of dialogue containing "I" comes back as a false positive, which on this book is most of them.
+
+
+A NOTE ON SECTION 3
+
+CLAUDE.md says to read chapters with the Read tool on individual files, several in parallel, and that shell loops over the chapter directory produce oversized output and interrupt the flow. The August 2026 session used the shell loop anyway. Both approaches got the book read. The loop puts one large block in front of the model and is easy to resume from a line number; parallel Read calls keep each file separate and match what CLAUDE.md asks for. Decide which you want before reusing this, rather than letting the file decide by default.

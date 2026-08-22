@@ -1,0 +1,287 @@
+CEFR LEVEL ESTIMATE FROM A WORD-FREQUENCY LIST
+
+Date: 2026-08-01
+Input: research/words__agent.txt (unique word plus occurrence count, one per line)
+Code: research/cefr_bands.py, tests in research/test_cefr_bands.py
+Data: research/en_50k.txt (frequency list), research/exclude_proper_nouns.txt
+
+
+WHAT THIS IS
+
+This is a first pass at answering "what CEFR level is this book" using nothing but a word list with counts. It is a vocabulary-load measurement. It cannot see sentence length, tense variety, clause nesting, dialect, idiom, or cultural inference, all of which also drive CEFR level. Treat the number it produces as one input out of several, not a verdict.
+
+
+THE SHORT ANSWER
+
+Rough estimate: B1 plus to B2. Call it B2 for a reader working alone, B1 for a reader with a dictionary or a teacher. It is clearly above A2, and it is not C1.
+
+That will feel wrong next to a grade 2 to 3 English readability score, and the gap is real rather than an error. Readability formulas measure sentence length and word length. This book scores easy on both: average word length is 4.06 characters and only 4.9 percent of running words have three or more syllables. What the formulas do not measure is vocabulary breadth, and that is where the demand sits. A native-speaking eight year old reading at grade 3 already carries a vocabulary somewhere in the region of five to ten thousand words. An A2 learner carries roughly fifteen hundred. Same sentences, very different experience.
+
+
+THE NUMBERS
+
+Size and variety, before any filtering:
+
+  running words (tokens)      65346
+  unique words (types)         5042
+  type/token ratio            0.0772
+  words used exactly once      2187   (43.4 percent of unique words)
+  average word length          4.06 characters
+  three or more syllables      4.9 percent of running words
+
+After removing proper nouns, invented setting words and contraction fragments, 4426 running words and 166 unique words came out, leaving 60920 core running words. Coverage by frequency band, where the band is position in a 50000-word English frequency list:
+
+  band            percent of text   cumulative   unique words
+  1 to 1000            82.37            82.37        1389
+  1001 to 2000          6.12            88.49         776
+  2001 to 3000          3.01            91.50         500
+  3001 to 5000          2.89            94.38         612
+  5001 to 10000         2.97            97.36         676
+  10001 to 50000        2.44            99.80         834
+  off the list          0.20           100.00          89
+
+
+HOW TO READ THE COVERAGE TABLE
+
+The reading research finding this rests on is that comprehension depends on the percentage of running words a reader already knows, and that the useful thresholds are about 95 percent for comprehension with effort and about 98 percent for comfortable independent reading. Below 95 percent, unknown words arrive faster than context can resolve them and the reader stops reading and starts decoding.
+
+So the question becomes: how large a vocabulary do you need before your coverage of this book crosses those lines. On these numbers, 95 percent needs roughly the ten thousand most frequent words and 98 percent needs considerably more.
+
+Mapped against the usual rough vocabulary sizes for CEFR levels, where A2 is about fifteen hundred words, B1 about two thousand five hundred to three thousand, B2 about four to five thousand, and C1 about eight thousand, that would suggest C1. I do not believe C1, for two reasons set out below, and I have adjusted down to B1 plus to B2 accordingly.
+
+
+WHY I ADJUSTED THE ESTIMATE DOWN
+
+First reason: word forms versus word families. The frequency list ranks surface forms, while CEFR vocabulary sizes are quoted in word families, where know, knows, knew, known and knowing are one item rather than five. This was originally an adjustment made by hand; it is now handled in the code, and the table above already reflects it. See the section headed THE STEMMING FIX for what changed and how much it mattered.
+
+Second reason, and the bigger one: the frequency list is built from film and television subtitles, so it measures spoken English. Written fiction has a whole vocabulary that spoken English barely uses, namely the dialogue tags and body language verbs. Look at what dominates the deepest band in this book:
+
+  nodded 89, whispered 63, grinned 55, leaned 47, replied 42, paused 25,
+  blushed 24, stared 24, sighed 21, shrugged 18, glanced 16, hugged 16,
+  slid 15, waved 15, glared 11, snorted 11, smirked 8, sniffed 8,
+  patted 8, giggled 8, mumbled 8
+
+Every one of those is ranked beyond 10000 in a spoken corpus, and nodded is ranked 22772. In a written-fiction corpus they would all be common. Roughly half of the 4.48 percent sitting in the deepest band is this one cluster. It is also a closed and small set, perhaps fifty to eighty words, that any learner absorbs quickly from the first novel they read, which makes it a poor reason to push the level estimate up.
+
+Set against those two adjustments there is one thing pushing the other way: 43.4 percent of the unique vocabulary appears exactly once. That is a wide, thin tail. Most of it is descriptive colour that a reader can skip without losing the plot, so it inflates the apparent demand more than the real one.
+
+
+CONCLUSION
+
+Vocabulary load is B1 to B2, and B1 plus remains the honest single label. A B1 learner with about 3000 words reaches 91.5 percent coverage, roughly one unknown word in twelve, which is followable with a dictionary but not comfortable. A B2 learner with about 5000 reaches 94.4 percent, essentially at the threshold where reading stops being decoding. A C1 learner is clear of it at 97.4 percent. Sentence-level difficulty is far lower, measured at A2 or below: average sentence length is 7.52 words. An A2 learner still cannot read this unaided, despite the short sentences, because 3000-word coverage is where the vocabulary starts to work and A2 is half that.
+
+If you want a single label for a book description, B1 plus is the honest one, with a note that the syntax is easier than the vocabulary.
+
+
+WHAT IS STILL MISSING
+
+These would move the estimate more than any refinement of the word list.
+
+1. Sentence-level data. Average sentence length, longest sentence, distribution. The word list throws this away, and it is half of what CEFR cares about.
+
+2. Tense and mood inventory. Whether the text uses conditionals, past perfect, passives, reported speech. A text can be lexically simple and grammatically B2.
+
+3. Phrasal verbs and idiom. These are counted here as their component words, all of which are top-1000, so the measurement scores them as easy when they are one of the hardest things about English. Look up and look after are invisible to this method.
+
+4. Dialogue proportion. Heavy dialogue lowers effective difficulty; heavy exposition raises it.
+
+
+IMPROVEMENTS WORTH FOLDING INTO THE OTHER TOOL
+
+These are the things that actually changed the answer while I worked, in rough order of how much difference they made.
+
+1. Choose the frequency list to match the genre, and say which one you used. My first run used a web-crawl list, google-10000-english, and it was badly wrong for fiction. It ranked pulled, stood, walked, breath and replied between 5000 and 10000, and had no entry at all for nodded, whispered or grinned. Switching to the subtitle-derived list moved top-1000 coverage from 66.6 percent to 78.4 percent. That is not a small correction, it is the difference between two CEFR levels. A written-fiction list, or a blend of a spoken and a written list, would be better still than what I ended up with. This is the single highest-value change available.
+
+2. Exclude proper nouns and invented vocabulary before computing any percentage, not after. In this book they are 4426 running words, 6.8 percent of the text. Left in, they are counted as unknown words and push the difficulty estimate up by most of a level, which is wrong: a reader skims a character name without friction. The exclusion list has to be hand-maintained, which is the tedious part, but there is a shortcut worth building. Since proper nouns are capitalised mid-sentence in the source text, have the tokenizer emit a separate capitalised-mid-sentence count alongside the lowercased one. Any word that is nearly always capitalised outside sentence-initial position is a proper noun. That gets you most of the list automatically and leaves only the invented common nouns, blagy and greega and toptail, for hand review. The criterion that emerged from that hand review, after several wrong calls, is simply: is it a real word in the language being measured. Names and invented coinages come out, because a glossary handles them and they say nothing about the reader's command of English. Real words stay in even when they feel setting-specific, which is why sportster stayed and poni did not.
+
+3. Stem before lookup, and test the stemmer. Folding inflections onto base forms before the frequency lookup is what keeps walked, smiling and ponies from being scored as rare. Two specifics worth copying. The stemmer must be allowed to over-generate, because a candidate that is not a real word simply fails to match the frequency list, so there is no cost to trying several. And the word itself must be tried first, so that a form with its own entry in the list keeps its own rank rather than inheriting its stem's.
+
+   One real bug came out of this, and it is easy to hit. Stripping ed from stopped leaves stopp, which matches nothing. The doubled-consonant reduction has to run on each stripped stem, not only on the original word. My exploratory version had this bug and it is why grinned, at 55 occurrences, showed up as an unknown word. The unit test test_handles_doubled_consonant is what caught it.
+
+4. Report the off-list words, sorted by frequency. This is the most useful diagnostic in the whole script. Anything appearing often and landing off-list is either a proper noun you have not excluded yet, or evidence that your frequency list is a bad fit for the genre. Both are things you want to know before trusting the output.
+
+5. Report coverage cumulatively and answer the threshold question directly. The per-band percentages are hard to interpret. The cumulative column and the derived line, "95 percent coverage needs about the N most frequent words", is the thing a person can actually act on.
+
+6. Weight by tokens, not types. All the coverage percentages here are shares of running words. A count of unique words tells you about the author's range but not about the reader's experience, because the reader meets the word once per occurrence.
+
+
+HOW TO RUN IT
+
+  cd research
+  python3 cefr_bands.py words__agent.txt en_50k.txt exclude_proper_nouns.txt
+
+Tests:
+
+  cd research
+  python3 -m unittest test_cefr_bands
+
+The frequency list en_50k.txt came from
+https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/en/en_50k.txt
+
+
+PROVENANCE NOTE
+
+The band-to-CEFR vocabulary sizes and the 95 and 98 percent coverage thresholds are widely used rules of thumb from vocabulary research rather than anything the Council of Europe publishes. There is no official CEFR word list. Anyone quoting a precise CEFR level from vocabulary data alone, including this file, is estimating.
+
+
+================================================================
+SECOND QUESTION: THE SAME BOOK IN ESPERANTO
+
+
+THE SHORT ANSWER
+
+Roughly A2 plus to B1, about one level below the English. And yes, it could make a good reader for an A2 to low B1 learner, better than most novels would, for reasons that show up in the data. The word "colloquial" is the problem, and it is discussed below.
+
+
+WHY THE LEVEL DROPS
+
+The English estimate was driven by vocabulary breadth rather than by sentence difficulty. There are 4879 non-name unique words and 43 percent of the unique vocabulary appears exactly once. Esperanto's derivational system collapses most of that breadth, because a learner who knows the roots and the affixes can parse a compound they have never seen before.
+
+The clearest case is the cluster that inflated the English measurement hardest, the dialogue tags and body-language verbs. In English, nodded, whispered, grinned, shrugged, blushed and smirked are six separate items to learn, all ranked beyond 10000 in a spoken frequency corpus. In Esperanto, kapjesi is kapo plus jesi, both A1 roots, and it parses on sight. Levi la sxultrojn is a phrase made of known words rather than a rare verb. The single biggest source of measured difficulty in the English text largely disappears.
+
+
+ROOT-COUNT ARITHMETIC
+
+This is estimation, not measurement, and the inputs should be checked.
+
+  unique words, names removed          4879
+  estimated English word families      about 2900
+  English families per Esperanto root  about 2 to 3
+  estimated Esperanto roots            about 1100 to 1500
+
+For scale, the Universala Vortaro is about 900 roots and the Baza Radikaro Oficiala about 2500. Both figures are from memory and should be verified against Edukado.net before being quoted anywhere. A book sitting at 1100 to 1500 roots lands at strong A2 to solid B1.
+
+
+WHAT THE DATA SAYS ABOUT FITNESS AS A GRADED READER
+
+Three measurements argue in favour, and they happen to be the properties that are hardest to retrofit into an existing book.
+
+  first and second person pronouns        5.5 percent of running words
+  the word "said"                         710 occurrences, 1.1 percent of text
+  however, although, despite, thus, etc.  12 occurrences in 65346 words
+
+Twelve formal discourse connectives in an entire novel. There is essentially no abstract exposition here. The book is concrete, physical, heavily dialogic, and anchored in the immediate scene, which is exactly the profile of a good graded reader. Add the short sentences that are already there and the structural work is mostly done.
+
+Most graded readers are written to a word list first and a story second, which is why they are dull. This is the opposite problem, and it is the better problem to have.
+
+
+WHERE IT WORKS AGAINST THE GOAL
+
+1. Colloquial register raises the level rather than lowering it. Elision, the discourse particles do, ja and nu, slangy affix use, and the idiom that Jordan's Being Colloquial in Esperanto exists to document, are all B1 to B2 material. A text can be colloquial or it can be A2. It cannot be both and do either one well. This is a choice to make deliberately before drafting, not something to resolve in revision.
+
+2. Participles. A novel with action and flashback wants the -int, -ant and -ont system and the compound tenses. That is B1 grammar no matter how controlled the vocabulary is. A workable policy would be adjectival participles only and no compound passives, but it is a constraint that will be felt on every page.
+
+3. Invented and setting vocabulary does not get easier. Blagy, greega, toptail and burnweed are 6.3 percent of the running text. In Esperanto they become blagio, brulherbo and so on, which is more transparent, but they still need a per-chapter glossary.
+
+
+SCOPE
+
+The book is 65346 words. Re-writing it in Esperanto is a large project, not a weekend. One chapter or one story arc, released as a standalone graded reader, is a complete thing on its own terms, can be tested against real learners, and can be finished. The whole book is a different order of commitment and worth choosing on purpose rather than drifting into.
+
+
+A TOOL NOTE FOR THE OTHER SESSION
+
+The method in cefr_bands.py does not transfer to Esperanto without change. Frequency banding over surface word forms assumes a language where the form is roughly the unit of learning. In an agglutinative language with a productive affix system that assumption breaks: malsanulejo is one item to look up and four known pieces to a learner who has the affixes. Any Esperanto version of this tool has to decompose to roots and affixes first and band the roots, otherwise it will report a text as far harder than it reads. The same warning applies in weaker form to English compounds and phrasal verbs, which this tool already gets wrong.
+
+
+================================================================
+CROSS-CHECK AGAINST THE EXISTING GRADE-LEVEL TOOL
+
+Source: /usr/local/src/LeamHall/books/agent/reports/agent_report.txt
+Dated April 2023, 88 scenes.
+
+
+WHAT IT ADDS
+
+This report measures the thing the word-list method cannot see, namely sentence length. Aggregated across all 88 scenes:
+
+  average sentence length   mean 7.52 words, median 7.42, range 5.37 to 11.14
+  average word length       mean 4.16 characters, range 3.71 to 4.73
+  grade level               mean 3.85, median 3.77, range 1.74 to 8.01
+
+Grade level distribution, one hash per scene:
+
+  1.x  #
+  2.x  ########
+  3.x  ##############################################
+  4.x  ############################
+  5.x  ####
+  8.x  #
+
+84 of 88 scenes sit between grade 2.6 and 5.0. The single 8.01 outlier is a 270-word scene, so the formula is noisy there rather than the prose being difficult.
+
+
+WHAT IT CHANGES
+
+It confirms the two-axis picture and firms up the easier axis, which was previously a guess. Sentence architecture is A2 or below: 7.5 words per sentence is shorter than published A2 graded readers, which typically run 8 to 12. Just as valuable, the difficulty is consistent across 88 scenes. A reader with no difficulty spikes is worth more to a learner than one with a lower average and three punishing chapters.
+
+For the Esperanto question this moves "could be a good A2 to B1 reader" from plausible to likely. Sentence architecture is the expensive thing to retrofit into a finished novel, and it is already done. What remains is controlling the root list, and Esperanto morphology does much of that for free.
+
+
+WHY THE TWO TOOLS DISAGREE, AND WHY BOTH ARE RIGHT
+
+The grade level in this report appears to be Flesch-Kincaid. That formula takes exactly two inputs, average sentence length and average syllables per word. It is structurally incapable of seeing vocabulary breadth: a text of eight-word sentences built entirely from obscure words still scores grade 3. The word-band method is the mirror image, blind to sentence length. Neither answers the CEFR question alone. Run together they do, and the answer is syntax at A2 with vocabulary at B1 plus.
+
+
+THREE DISCREPANCIES WORTH CHECKING IN THE TOOL
+
+1. Internal inconsistency in the report. Reconstructing the running words from the report's own per-scene frequency lists gives 63679 tokens and an average word length of 3.96 characters. The report itself states 4.16. Two figures in one report that should agree do not. Since Flesch-Kincaid is sensitive to word length, this is worth resolving before trusting the grade numbers.
+
+2. Tokenizer problems, and disagreement between the two tools. The frequency lists carry 346 phantom unique forms created by punctuation glued to words: a curly opening quote makes "and" into a separate item, and a bare quote character is counted as a word in its own right. 1371 tokens, 2.2 percent, carry a glued opening quote. Contractions are handled inconsistently, with both didn and didn't present, while words__agent.txt has only didn. Total token counts differ between the tools by 2.5 percent, 63679 against 65346. Strip leading and trailing punctuation before counting, decide one policy for contractions, and drop punctuation-only tokens entirely.
+
+3. Syllable counting. Using an independent syllable counter with the report's own sentence length, Flesch-Kincaid comes out at 2.73 rather than the reported 3.85. The gap corresponds to 1.40 syllables per word in the existing tool against 1.30 in cefr_bands.py. The usual culprits are silent final e and the -ed ending, which is pronounced as a syllable only after t or d. Worth determining which counter is correct rather than assuming the older tool is; the author's own estimate of grade 2 to 3 is closer to the lower figure.
+
+None of this moves the CEFR estimate. A one-grade shift in Flesch-Kincaid does not change B1 plus, because vocabulary breadth is what drives that number and Flesch-Kincaid never saw it.
+
+
+THE OBVIOUS NEXT STEP FOR THE TOOL
+
+The two measurements should live in one report. Sentence length and syllables per word from the readability side, band coverage and vocabulary demand from the word-list side, printed together with an explicit note that the first pair describes syntax and the second describes vocabulary. That single change would have answered the original question without either tool needing to be run twice.
+
+
+================================================================
+THE STEMMING FIX
+
+
+WHAT WAS WRONG
+
+The first version of rank_of returned the first frequency-list match among the word and its candidate stems, and the word itself was tried first. That was a deliberate choice and it was wrong. It meant every regular inflection was scored at the rank of the inflected form rather than the rank of its family, and in a narrative text that is most of the verbs.
+
+The damage was large and entirely systematic:
+
+  stepped   scored 3952   step   is  692
+  teams     scored 3171   team   is  516
+  coaches   scored 8204   coach  is 1525
+  stared    scored 11643  star   is  901
+  paused    scored 30040  pause  is 7663
+  rested    scored 12444  rest   is  453
+  leaned    scored 16570  lean   is 4579
+
+The fix is one line of intent: return the lowest rank among the word and all its stems, not the first one found. A reader who knows step and the -ed ending can read stepped, so the burden of an inflected form is the burden of the commonest member of its family.
+
+
+WHAT IT CHANGED
+
+  band            before   after
+  top 1000         78.82   82.37
+  cumulative 2000  85.21   88.49
+  cumulative 3000  88.69   91.50
+  cumulative 5000  91.95   94.38
+  cumulative 10000 95.37   97.36
+
+The decision lists shrank by roughly a quarter at every threshold. Beyond rank 2000 at three or more occurrences: 807 words before, 618 after.
+
+
+THE COST OF THE FIX
+
+Taking the minimum can collapse a rare word onto a common lookalike. Auditing the whole book turned up exactly two genuine false merges:
+
+  stared -> star  (should be stare)   24 occurrences
+  meter  -> met   (should be metre)   10 occurrences
+
+Plus one in the no-own-entry group, hissed -> his, at 2 occurrences. That is about 0.05 percent of running words, against a systematic error that was touching most verbs in the text. Worth taking, but worth knowing about, and the -er suffix rule is the riskiest of the set if anyone tightens this later.
+
+
+THE GENERAL LESSON FOR THE OTHER TOOL
+
+This bug was found by a reader looking at the output and asking why coach and coaches were separate entries. It was not found by the tests, because the tests asserted the wrong behaviour: there was a test named test_direct_hit_beats_stem_hit that locked the mistake in place. A test can only protect a decision, never validate it. Print the intermediate output, in this case the word and the rank it resolved to, and read it. Any list where a plural and its singular sit on separate lines with wildly different ranks is telling you something.

@@ -5,7 +5,7 @@ A Python tool for assembling book manuscripts from multiple chapter files and ge
 
 ## Features
 
-- Collates text files into a single manuscript
+- Collates the text files in one directory into a single manuscript, in filename order
 - Generates readability reports using Flesch-Kincaid grade level
 - Configurable via TOML file
 - Supports special chapters (prologue, epilogue, ISBN page, etc.)
@@ -16,10 +16,18 @@ A Python tool for assembling book manuscripts from multiple chapter files and ge
 - Python 3.11 or higher
 - No external dependencies required for core functionality
 
+## What BookBot Does Not Do
+
+- No spell checking and no grammar checking. Use your word processor for those.
+- No formatting. BookBot writes plain text and leaves markers such as `__section_break__` for you to resolve in LibreOffice. See `docs/HOWTO`.
+- One run produces one manuscript. It does not build several books at once.
+
+Sentence detection assumes standard English punctuation, which is worth knowing when you read the grade level.
+
 
 ## Quick Start:
 
-- Download bookbot.py to a directory in your path. 
+- Download bookbot.py to a directory in your path.
 
 ### Create a directory structure for your masterpiece
 
@@ -43,6 +51,9 @@ A Python tool for assembling book manuscripts from multiple chapter files and ge
 ```
 
 ### Run BookBot
+
+Run BookBot from inside your book's directory. It reads `book_config.toml` and `chapters/` from the directory you are standing in, not from the directory `bookbot.py` lives in. That is what lets one copy in `/usr/local/bin` serve every book you write.
+
 ```
 python ../bookbot.py
 ```
@@ -65,7 +76,7 @@ python ../bookbot.py
 
 ## Writing Structure
 
-BookBot assumes a simple order for chapter filenames and for chapter formats. 
+BookBot assumes a simple order for chapter filenames and for chapter formats.
 
 ### Chapter Files
 
@@ -110,25 +121,6 @@ This project demonstrates:
 - **Object-oriented design** - Classes with clear responsibilities
 - **Command-line interfaces** - Using argparse for CLI tools
 
-### Code Requirements
-
--  Will take text files in a single directory, sort them by filename, modify them as chapters or specific sections, and collate them.
--  Will be a single file application.
--  May take word lists for grade level reading reports. 
--  The output will be a single text file.
--  The program will not to spell or grammar checking.
--  The program will use specific directories for output and input.
--  The program will use a config file for book specific data.
--  The program will be runnable from a shared location, such as /usr/local/bin, when the user is in the directory for the book.
--  The program uses standard English punctuation for determining sentences. 
-
-### Code Process Requirements
-
--  Will use Python and its standard lib for all code. Nothing else.
--  Third-party code may be used by the developers. For example, black, flake8, coverage, etc.
--  The testing framework will be unittest. 
--  Where practical, the code will conform to good Python style.
-
 ### Learning Path For New Pythonistas
 
 1. Start with `parse_args()` to understand CLI argument parsing
@@ -139,12 +131,14 @@ This project demonstrates:
 
 ## Contributing
 
-Contributions welcome! This project follows:
+Contributions welcome! These rules are not negotiable, because they are what keeps the tool handable by writers who do not program:
 
 - Python 3.6
-- PEP 8 style guidelines
-- Python standard library only (no external dependencies)
-- unittest for testing
+- `bookbot.py` stays a single file. Do not split it into a package, and do not add modules it imports.
+- Runtime code uses the Python standard library and nothing else.
+- Tests use unittest. Never pytest.
+- Third-party tools are for developers only. black, flake8, coverage and semgrep are listed in `requirements_dev.txt` and run in a venv. They never become runtime dependencies.
+- PEP 8 style, enforced by black and flake8. See Code Quality below.
 - Comprehensive documentation
 
 
@@ -152,7 +146,7 @@ Contributions welcome! This project follows:
 
 - Check out the [Issues](https://github.com/LeamHall/bookbot/issues) page
 - Clone/Fork the repo to your local machine
-- Use a venv or similar with black, coverage, flake8, and semgrep 
+- Use a venv or similar with black, coverage, flake8, and semgrep
 - Verify your code works with Python 3.6, and any later versions you wish to test
 
 
@@ -183,17 +177,23 @@ bookbot/
 │   ├── test_config.py
 │   └── test_report.py
 ├── docs/
-│   ├── HOWTO              # LibreOffice formatting guide
-│   └── requirements.txt   # Project requirements documentation
+│   └── HOWTO              # LibreOffice formatting guide
+├── requirements_dev.txt    # Developer tools, never runtime dependencies
 ├── sample_book_config.toml
 └── README.md
 ```
 
 ## License
 
-This software is Copyright (c) 2025 by Leam Hall.
+This software is Copyright (c) 2020-2026 by Leam Hall.
 
-This is free software, licensed under: The Artistic License 2.0 (GPL Compatible)
+The code is free software, licensed under the MIT License. See LICENSE for the full text.
+
+The files in `data/` are data rather than code, and they are not all MIT. Each records its own origin, terms and required attribution in `data/README`. In particular, `data/en_50k.txt` is used under CC BY-SA 4.0:
+
+> Frequency list by Hermit Dave, from the [FrequencyWords project](https://github.com/hermitdave/FrequencyWords), used under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+
+Holding that file alongside MIT code does not make the code share-alike. A published derivative of the list would itself be CC BY-SA 4.0; `data/README` states where that line falls.
 
 ## Author
 

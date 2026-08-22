@@ -6,3 +6,16 @@ book/
 tmp/
 .coverage
 __pycache__/
+
+.claude/settings.local.json
+
+
+# Test tooling we do not use, but which leaves artefacts if run.
+.pytest_cache/
+
+# Output directories a test run can create in the repo root.
+reports/
+chapters/
+
+# Working notes. Anything a reader needs belongs in docs/.
+research/

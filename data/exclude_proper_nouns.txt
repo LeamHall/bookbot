@@ -1,0 +1,193 @@
+# Proper nouns, invented words and setting-specific coinages found in
+# words__agent.txt.  These are dropped before frequency banding, because a
+# reader does not need to "know" a character or place name to read past it.
+#
+# Drafted by inspection of the off-list output, then verified against the
+# author's knowledge of the text on 2026-08-01.  Removed as ordinary
+# vocabulary: truffle (an ice cream component) and sportster (a car
+# description).  snooty was never listed.  Confirmed as names: bertha,
+# gangster and missy (lizards), trelaine (a place), tryano (a car brand).
+#
+# One word per line.  Blank lines and lines starting with # are ignored,
+# as is any trailing # comment on a word line.
+
+# people
+ak
+foster
+gray
+akil
+al
+alba
+aldo
+allesandro
+adan
+anwyn
+askerlund
+astrom
+auberginia
+aurelai
+barid
+ben
+benny
+billy
+birach
+brakey
+burk
+casimir
+chemin
+cra
+domici
+domicis
+dorothea
+dqoubous
+esmerada
+evelyn
+faluton
+ferdie
+franco
+garradh
+gert
+grishom
+guinevere
+hannah
+herbert
+ian
+ifny
+ilana
+irene
+janice
+janoweski
+jen
+jerome
+jimmie
+jo
+joannsen
+joaqim
+joey
+john
+josephine
+julie
+karista
+krysta
+lavigne
+lawrence
+lefron
+lily
+mack
+marcelino
+marco
+matilda
+matreetha
+micah
+mikael
+mil
+milda
+minst
+moe
+mon
+monte
+morgan
+oregund
+pam
+parker
+pascal
+pascals
+protheam
+qana
+qami
+radcliff
+ris
+roberson
+rosemarino
+sandra
+saorsa
+seh
+solomon
+soler
+solers
+tala
+tara
+tjanern
+treville
+tyjon
+webb
+wilbur
+zeke
+zo
+zoliana
+
+# places, groups and setting terms
+angilique
+atrean
+atreo
+blagied
+confeds
+freeday
+highport
+sangrean
+theocracy
+trelaine     # a place
+
+# named animals, invented flora, fauna and objects
+bertha       # a lizard
+missy        # a lizard
+poni         # the six-legged riding lizards, Traveller setting
+ponies       # English plural/singular of poni as used in the text
+pony
+blagies
+blagy
+burnweed
+corder
+crylophenol
+gangster     # confirmed a name, not the ordinary noun
+glowbugs
+greega
+lacar
+nrajno
+plasticrete
+plexisteel
+realspace
+tater
+taters
+toptail
+tryano       # a car brand, behaves like a name
+
+# in-world jargon and slang
+combatives
+comm
+comms
+firsters
+grav
+middler
+middlers
+newsie
+poobah
+primes
+spakers
+televids
+vid
+vids
+watermanship
+
+# contraction fragments left by the tokenizer
+aren
+couldn
+d
+didn
+doesn
+don
+hadn
+hasn
+haven
+isn
+ll
+m
+re
+s
+shouldn
+t
+ve
+wasn
+weren
+won
+wouldn

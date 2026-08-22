@@ -6,6 +6,11 @@
 # author  :  Leam Hall
 # desc    :  Assembles and reports on text file based documents.
 #            Supports novels, reports, SOPs, and other plain-text document types.
+# license :  MIT
+# copyright: Copyright (c) 2020-2026 Leam Hall
+#
+# This file is distributed as a single self-contained script and may be copied
+# on its own, apart from the repository that holds the full LICENSE text.
 
 import argparse
 import errno

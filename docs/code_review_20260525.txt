@@ -1,0 +1,71 @@
+CODE REVIEW SESSION - bookbot.py
+Date: 2026-05-25
+Reviewer: Claude Code (claude-sonnet-4-6)
+
+
+WHAT WAS DONE
+
+A full review of bookbot.py was conducted covering three areas: code structure, simplicity of code, and quality of comments. A list of additional production-readiness questions was also provided.
+
+
+STRUCTURE FINDINGS
+
+The file is well-organized with clear section dividers and a logical ordering: constants, config, I/O, parsing, analysis, domain classes, output, and entry point. Separation of pure functions from classes is good practice. The backwards-compatibility block at the bottom (Chapter = Section, BookBuilder = DocumentBuilder, etc.) and the special_chapters module-level dict suggest a prior refactor. Those aliases add two names for everything and may confuse future readers if they are no longer needed.
+
+
+SIMPLICITY FINDINGS
+
+Most functions are appropriately sized. The following specific issues were identified:
+
+- read_config (line 128) catches (KeyError, FileNotFoundError) but NOT tomllib.TOMLDecodeError. A config file with a syntax error is silently ignored and defaults are used. This is almost certainly a bug.
+- list_of_files (line 189) raises FileNotFoundError when the directory contains no .txt files. The directory was found; the exception type is misleading.
+- DocumentBuilder.build() (line 466) mutates section.number on Section objects passed in from outside. Side effects on caller-owned data are surprising.
+- Report.__init__ (line 614) lowercases all input text and stores lowercased strings in self.lines. The original text is silently discarded.
+- special_chapters (line 635) is a module-level dict of empty strings (""), inconsistent with parse_sections which uses None for unfound specials.
+
+
+COMMENT QUALITY FINDINGS
+
+Comments are generally good and explain the WHY, not just the WHAT. parse_paragraphs, count_syllables, and the Section class docstring are particularly well done. The backwards-compat block has a useful header. Two minor issues: the _args parameter name in read_config is unconventional (leading underscore usually signals unused or private), and the variable l in lines_from_file:595 is an ambiguous single-letter name that violates PEP 8.
+
+
+ADDITIONAL PRODUCTION-READINESS QUESTIONS
+
+1. Error handling completeness - Are all exceptions from external calls (TOML parse, file I/O, os.mkdir) explicitly caught and reported, rather than silently dropped?
+2. Test coverage - Do tests cover edge cases: empty files, files with only scene breaks, bad TOML config, unknown doc_type, zero-sentence text?
+3. Logging - Is there a logging infrastructure for diagnosing failures in production runs?
+4. Input validation - Are config values validated at the boundary (unknown doc_type, missing required keys, non-existent chapter_dir)?
+5. Installability - Is there a pyproject.toml or setup.cfg with a proper entry point so the tool can be installed and invoked as a command?
+6. Security - Paths from CLI args and config are passed directly to open() and os.path.join(). Is path traversal a concern in the deployment context?
+7. Encoding asymmetry - load_lines uses utf-8-sig (handles Windows BOM) but write_document and write_reports use plain utf-8. Is this intentional?
+8. Idempotency - Does re-running the tool overwrite output files silently, or does it warn or fail if output already exists?
+
+
+ACTIONABLE ITEMS FOR NEXT SESSION
+
+The following items are bugs or clear improvements. A Claude Code session can ingest and act on each one independently.
+
+- FIX: In read_config, add tomllib.TOMLDecodeError to the except clause (or catch it separately and print an error message to stderr before exiting). File: bookbot.py, function read_config, around line 128.
+
+- FIX: In list_of_files, when no .txt files are found raise a more descriptive exception or use a different exception type (e.g. ValueError with a clear message) rather than FileNotFoundError, which implies the directory itself was missing. File: bookbot.py, function list_of_files, around line 189.
+
+- FIX: In DocumentBuilder.build(), avoid mutating section.number on the caller's Section objects. Assign the number to a local variable and pass it to _render_section instead. File: bookbot.py, function build, around line 466.
+
+- FIX: Audit whether the backwards-compatibility aliases (Chapter, BookBuilder, Book, book_filename, write_book, parse_chapters, chapter_type, lines_from_file, Report) are still imported by any script or test. If not, remove them. If yes, document which scripts depend on them.
+
+- FIX: The special_chapters module-level dict (line 635) stores empty strings. Change to None values to match the convention used in parse_sections, or remove if no external script depends on it.
+
+- IMPROVEMENT: Rename the _args parameter in read_config to args or cli_args. The leading underscore is misleading. File: bookbot.py, function read_config, line 114.
+
+- IMPROVEMENT: Rename the l variable in lines_from_file (line 595) to line to comply with PEP 8 naming conventions.
+
+- TASK: Add tests for the following edge cases (use Python unittest, no pytest):
+    1. read_config with a TOML file that has a syntax error (should not silently succeed)
+    2. list_of_files called on a directory with no .txt files
+    3. readability_stats called on a list containing only SCENE_BREAK sentinels (should raise ValueError)
+    4. Section built with an unknown doc_type value
+    5. DocumentBuilder.build() called twice on the same section list (verify section.number is not doubled)
+
+- TASK: Add a pyproject.toml (or update if one exists) with an entry point so bookbot can be installed and run as a command-line tool rather than only as a script.
+
+- TASK: Decide whether load_lines using utf-8-sig and write_document using utf-8 is intentional. If not, make them consistent.
